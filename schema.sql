@@ -69,7 +69,8 @@ CREATE TABLE IF NOT EXISTS public.computadores (
     marca_id INTEGER REFERENCES public.marcas(id),
     equipamento_id INTEGER REFERENCES public.equipamentos(id),
     ativo BOOLEAN DEFAULT TRUE NOT NULL,
-    garantia_ativa BOOLEAN DEFAULT FALSE NOT NULL
+    garantia_ativa BOOLEAN DEFAULT FALSE NOT NULL,
+    observacao TEXT
 );
 
 -- 4. TABELA DE ORDENS DE SERVIÇO (OS)

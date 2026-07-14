@@ -24,6 +24,7 @@ interface Computer {
   equipamento_id: number;
   ativo: boolean;
   garantia_ativa: boolean;
+  observacao: string | null;
   secretarias?: { nome: string };
   locais?: { nome: string };
   marcas?: { nome: string };
@@ -68,6 +69,7 @@ export const Computadores: React.FC = () => {
   const [equipamentoId, setEquipamentoId] = useState<number | ''>('');
   const [ativo, setAtivo] = useState(true);
   const [garantiaAtiva, setGarantiaAtiva] = useState(false);
+  const [observacao, setObservacao] = useState('');
   
   // Dynamic Local creation states
   const [newLocalName, setNewLocalName] = useState('');
@@ -147,6 +149,7 @@ export const Computadores: React.FC = () => {
     setEquipamentoId(equipamentos[0]?.id || '');
     setAtivo(true);
     setGarantiaAtiva(false);
+    setObservacao('');
     setErrorMsg('');
     setSuccessMsg('');
     setModalOpen(true);
@@ -163,6 +166,7 @@ export const Computadores: React.FC = () => {
     setEquipamentoId(comp.equipamento_id);
     setAtivo(comp.ativo);
     setGarantiaAtiva(comp.garantia_ativa);
+    setObservacao(comp.observacao || '');
     setErrorMsg('');
     setSuccessMsg('');
     setModalOpen(true);
@@ -219,7 +223,8 @@ export const Computadores: React.FC = () => {
       marca_id: Number(marcaId),
       equipamento_id: Number(equipamentoId),
       ativo,
-      garantia_ativa: garantiaAtiva
+      garantia_ativa: garantiaAtiva,
+      observacao: observacao || null
     };
 
     try {
@@ -643,6 +648,19 @@ export const Computadores: React.FC = () => {
                   />
                   <span className="text-xs font-semibold text-slate-700">Garantia Ativa</span>
                 </label>
+              </div>
+
+              {/* Observações */}
+              <div>
+                <label htmlFor="obs-computador" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Observações</label>
+                <textarea
+                  id="obs-computador"
+                  rows={2}
+                  placeholder="Informações adicionais sobre hardware, peças ou licenças..."
+                  value={observacao}
+                  onChange={(e) => setObservacao(e.target.value)}
+                  className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                />
               </div>
 
               {/* Buttons */}
