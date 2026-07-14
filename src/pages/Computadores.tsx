@@ -138,13 +138,8 @@ export const Computadores: React.FC = () => {
     setEditingId(null);
     setIdLegado('');
     setPatrimonio('');
-    
-    const initialSecId = secretarias[0]?.id || '';
-    setSecretariaId(initialSecId);
-    
-    const filteredLocs = locais.filter(l => l.secretaria_id === initialSecId);
-    setLocalId(filteredLocs[0]?.id || '');
-    
+    setSecretariaId('');
+    setLocalId('');
     setMarcaId(marcas[0]?.id || '');
     setEquipamentoId(equipamentos[0]?.id || '');
     setAtivo(true);
@@ -219,22 +214,13 @@ export const Computadores: React.FC = () => {
       setSubmitting(false);
       return;
     }
-    if (!secretariaId) {
-      setErrorMsg('O campo Secretaria é obrigatório.');
-      setSubmitting(false);
-      return;
-    }
-    if (!localId) {
-      setErrorMsg('O campo Local/Setor é obrigatório.');
-      setSubmitting(false);
-      return;
-    }
+
 
     const payload = {
       id_legado: idLegado || null,
       patrimonio: patrimonio === '' ? null : Number(patrimonio),
-      secretaria_id: Number(secretariaId),
-      local_id: Number(localId),
+      secretaria_id: secretariaId !== '' ? Number(secretariaId) : null,
+      local_id: localId !== '' ? Number(localId) : null,
       marca_id: Number(marcaId),
       equipamento_id: Number(equipamentoId),
       ativo,
@@ -606,14 +592,14 @@ export const Computadores: React.FC = () => {
               {/* Secretaria & Local */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="secretaria" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Secretaria <span>*</span></label>
+                  <label htmlFor="secretaria" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Secretaria</label>
                   <select
                     id="secretaria"
-                    required
                     value={secretariaId}
-                    onChange={(e) => setSecretariaId(Number(e.target.value))}
+                    onChange={(e) => setSecretariaId(e.target.value === '' ? '' : Number(e.target.value))}
                     className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
                   >
+                    <option value="">— Não informado —</option>
                     {secretarias.map(sec => (
                       <option key={sec.id} value={sec.id}>{sec.nome}</option>
                     ))}
@@ -621,23 +607,20 @@ export const Computadores: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Local/Setor <span>*</span></label>
+                  <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Local/Setor</label>
                   <select
                     id="local"
-                    required
                     value={localId}
                     onChange={(e) => setLocalId(e.target.value === '' ? '' : Number(e.target.value))}
                     className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
                   >
-                    {locais.filter(loc => loc.secretaria_id === Number(secretariaId)).length === 0 ? (
-                      <option value="">Nenhum setor cadastrado para esta secretaria</option>
-                    ) : (
-                      locais
-                        .filter(loc => loc.secretaria_id === Number(secretariaId))
-                        .map(loc => (
-                          <option key={loc.id} value={loc.id}>{loc.nome}</option>
-                        ))
-                    )}
+                    <option value="">— Não informado —</option>
+                    {locais
+                      .filter(loc => secretariaId === '' || loc.secretaria_id === Number(secretariaId))
+                      .map(loc => (
+                        <option key={loc.id} value={loc.id}>{loc.nome}</option>
+                      ))
+                    }
                   </select>
                 </div>
               </div>
