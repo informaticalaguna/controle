@@ -10,7 +10,8 @@ import {
   X, 
   User as UserIcon,
   Search,
-  Users
+  Users,
+  MapPin
 } from 'lucide-react';
 
 export const Layout: React.FC = () => {
@@ -21,6 +22,7 @@ export const Layout: React.FC = () => {
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Computadores', path: '/computadores', icon: Monitor },
+    { name: 'Setores', path: '/setores', icon: MapPin },
     { name: 'Ordens de Serviço', path: '/ordens', icon: ClipboardList },
   ];
 

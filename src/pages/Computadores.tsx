@@ -35,6 +35,12 @@ interface LookupTable {
   nome: string;
 }
 
+interface LocalLookup {
+  id: number;
+  nome: string;
+  secretaria_id: number;
+}
+
 export const Computadores: React.FC = () => {
   const { isAdmin } = useAuth();
   
@@ -43,7 +49,7 @@ export const Computadores: React.FC = () => {
   const [secretarias, setSecretarias] = useState<LookupTable[]>([]);
   const [marcas, setMarcas] = useState<LookupTable[]>([]);
   const [equipamentos, setEquipamentos] = useState<LookupTable[]>([]);
-  const [locais, setLocais] = useState<LookupTable[]>([]);
+  const [locais, setLocais] = useState<LocalLookup[]>([]);
   
   // Loading & UI States
   const [loading, setLoading] = useState(true);
@@ -95,12 +101,12 @@ export const Computadores: React.FC = () => {
       const { data: secData } = await supabase.from('secretarias').select('*').order('nome');
       const { data: marData } = await supabase.from('marcas').select('*').order('nome');
       const { data: eqData } = await supabase.from('equipamentos').select('*').order('nome');
-      const { data: locData } = await supabase.from('locais').select('*').order('nome');
+      const { data: locData } = await supabase.from('locais').select('id, nome, secretaria_id').order('nome');
 
       setSecretarias(secData || []);
       setMarcas(marData || []);
       setEquipamentos(eqData || []);
-      setLocais(locData || []);
+      setLocais((locData || []) as LocalLookup[]);
 
     } catch (err: any) {
       console.error(err);
@@ -114,13 +120,29 @@ export const Computadores: React.FC = () => {
     fetchData();
   }, []);
 
+  // Dynamically update localId when secretariaId changes
+  useEffect(() => {
+    if (modalOpen && secretariaId !== '') {
+      const filteredLocs = locais.filter(l => l.secretaria_id === Number(secretariaId));
+      const isCurrentLocalValid = filteredLocs.some(l => l.id === Number(localId));
+      if (!isCurrentLocalValid) {
+        setLocalId(filteredLocs[0]?.id || '');
+      }
+    }
+  }, [secretariaId, locais, modalOpen, localId]);
+
   const openAddModal = () => {
     setIsEditing(false);
     setEditingId(null);
     setIdLegado('');
     setPatrimonio('');
-    setSecretariaId(secretarias[0]?.id || '');
-    setLocalId(locais[0]?.id || '');
+    
+    const initialSecId = secretarias[0]?.id || '';
+    setSecretariaId(initialSecId);
+    
+    const filteredLocs = locais.filter(l => l.secretaria_id === initialSecId);
+    setLocalId(filteredLocs[0]?.id || '');
+    
     setMarcaId(marcas[0]?.id || '');
     setEquipamentoId(equipamentos[0]?.id || '');
     setAtivo(true);
@@ -148,20 +170,23 @@ export const Computadores: React.FC = () => {
 
   const handleCreateLocal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newLocalName.trim()) return;
+    if (!newLocalName.trim() || !secretariaId) return;
 
     setSubmittingLocal(true);
     setErrorMsg('');
     try {
       const { data, error } = await supabase
         .from('locais')
-        .insert({ nome: newLocalName.trim().toUpperCase() })
+        .insert({ 
+          nome: newLocalName.trim().toUpperCase(),
+          secretaria_id: Number(secretariaId)
+        })
         .select()
         .single();
 
       if (error) throw error;
 
-      setLocais(prev => [...prev, data as LookupTable].sort((a, b) => a.nome.localeCompare(b.nome)));
+      setLocais(prev => [...prev, data as LocalLookup].sort((a, b) => a.nome.localeCompare(b.nome)));
       setLocalId(data.id);
       setNewLocalName('');
       setLocalModalOpen(false);
@@ -590,12 +615,18 @@ export const Computadores: React.FC = () => {
                     id="local"
                     required
                     value={localId}
-                    onChange={(e) => setLocalId(Number(e.target.value))}
+                    onChange={(e) => setLocalId(e.target.value === '' ? '' : Number(e.target.value))}
                     className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
                   >
-                    {locais.map(loc => (
-                      <option key={loc.id} value={loc.id}>{loc.nome}</option>
-                    ))}
+                    {locais.filter(loc => loc.secretaria_id === Number(secretariaId)).length === 0 ? (
+                      <option value="">Nenhum setor cadastrado (clique em + Novo Local)</option>
+                    ) : (
+                      locais
+                        .filter(loc => loc.secretaria_id === Number(secretariaId))
+                        .map(loc => (
+                          <option key={loc.id} value={loc.id}>{loc.nome}</option>
+                        ))
+                    )}
                   </select>
                 </div>
               </div>

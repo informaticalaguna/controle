@@ -21,7 +21,9 @@ CREATE TABLE IF NOT EXISTS public.defeitos (
 
 CREATE TABLE IF NOT EXISTS public.locais (
     id SERIAL PRIMARY KEY,
-    nome TEXT UNIQUE NOT NULL
+    nome TEXT NOT NULL,
+    secretaria_id INTEGER REFERENCES public.secretarias(id) ON DELETE CASCADE,
+    UNIQUE (nome, secretaria_id)
 );
 
 -- Popular tabelas auxiliares

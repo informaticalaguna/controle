@@ -11,6 +11,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Computadores } from './pages/Computadores';
 import { OrdensServico } from './pages/OrdensServico';
 import { Tecnicos } from './pages/Tecnicos';
+import { Setores } from './pages/Setores';
 
 const App: React.FC = () => {
   return (
@@ -28,6 +29,7 @@ const App: React.FC = () => {
             <Route element={<Layout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/computadores" element={<Computadores />} />
+              <Route path="/setores" element={<Setores />} />
               <Route path="/ordens" element={<OrdensServico />} />
               
               {/* Admin Only Screens */}
