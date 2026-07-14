@@ -370,7 +370,7 @@ export const Computadores: React.FC = () => {
         <div className="overflow-x-auto rounded-2xl border border-slate-200/60 bg-white shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50 text-2xs font-semibold uppercase tracking-wider text-slate-400">
+              <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 <th className="py-4 px-6">ID / Legado</th>
                 <th className="py-4 px-6">Patrimônio</th>
                 <th className="py-4 px-6">Equipamento / Marca</th>
@@ -387,7 +387,7 @@ export const Computadores: React.FC = () => {
                   <td className="py-4 px-6">
                     <p className="font-bold text-slate-800">#{comp.id}</p>
                     {comp.id_legado && (
-                      <span className="inline-flex rounded bg-slate-100 px-1.5 py-0.5 text-3xs font-semibold text-slate-500 uppercase tracking-wider mt-1">
+                      <span className="inline-flex rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-semibold text-slate-400 uppercase tracking-wider mt-1 border border-slate-100">
                         Legado: {comp.id_legado}
                       </span>
                     )}
@@ -401,13 +401,13 @@ export const Computadores: React.FC = () => {
                   {/* Equipamento / Marca */}
                   <td className="py-4 px-6">
                     <p className="font-semibold text-slate-800">{comp.equipamentos?.nome}</p>
-                    <p className="text-3xs text-slate-500">{comp.marcas?.nome}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{comp.marcas?.nome}</p>
                   </td>
 
                   {/* Secretaria / Local */}
                   <td className="py-4 px-6">
                     <p className="font-semibold text-slate-800">{comp.secretarias?.nome}</p>
-                    <p className="text-3xs text-slate-500">{comp.locais?.nome}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{comp.locais?.nome}</p>
                   </td>
 
                   {/* Status Badges */}
