@@ -284,18 +284,19 @@ export const OrdensServico: React.FC = () => {
           .eq('id', editingId);
 
         if (error) throw error;
-        setSuccessMsg('Ordem de Serviço atualizada com sucesso!');
       } else {
         const { error } = await supabase
           .from('ordens_servico')
           .insert(payload);
 
         if (error) throw error;
-        setSuccessMsg('Ordem de Serviço aberta com sucesso!');
       }
 
       setModalOpen(false);
       fetchData();
+      const msg = isEditing ? 'Ordem de Serviço atualizada com sucesso!' : 'Ordem de Serviço aberta com sucesso!';
+      setSuccessMsg(msg);
+      setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err: any) {
       console.error(err);
       setErrorMsg(err.message || 'Erro ao salvar a Ordem de Serviço.');

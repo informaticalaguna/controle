@@ -209,8 +209,23 @@ export const Computadores: React.FC = () => {
     setSuccessMsg('');
     setSubmitting(true);
 
-    if (!secretariaId || !localId || !marcaId || !equipamentoId) {
-      setErrorMsg('Preencha todas as chaves obrigatórias.');
+    if (!equipamentoId) {
+      setErrorMsg('O campo Computador (Tipo de Equipamento) é obrigatório.');
+      setSubmitting(false);
+      return;
+    }
+    if (!marcaId) {
+      setErrorMsg('O campo Marca/Modelo é obrigatório.');
+      setSubmitting(false);
+      return;
+    }
+    if (!secretariaId) {
+      setErrorMsg('O campo Secretaria é obrigatório.');
+      setSubmitting(false);
+      return;
+    }
+    if (!localId) {
+      setErrorMsg('O campo Local/Setor é obrigatório.');
       setSubmitting(false);
       return;
     }
@@ -558,7 +573,7 @@ export const Computadores: React.FC = () => {
               {/* Lookup selectors */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="equipamento" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Equipamento</label>
+                  <label htmlFor="equipamento" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Computador <span>*</span></label>
                   <select
                     id="equipamento"
                     required
@@ -573,7 +588,7 @@ export const Computadores: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="marca" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Marca/Modelo</label>
+                  <label htmlFor="marca" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Marca/Modelo <span>*</span></label>
                   <select
                     id="marca"
                     required
@@ -591,7 +606,7 @@ export const Computadores: React.FC = () => {
               {/* Secretaria & Local */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="secretaria" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Secretaria</label>
+                  <label htmlFor="secretaria" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Secretaria <span>*</span></label>
                   <select
                     id="secretaria"
                     required
@@ -606,7 +621,7 @@ export const Computadores: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Local/Setor</label>
+                  <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Local/Setor <span>*</span></label>
                   <select
                     id="local"
                     required
