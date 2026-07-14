@@ -136,11 +136,14 @@ export const PublicSearch: React.FC = () => {
 
       {/* Navigation */}
       <header className="relative z-10 flex h-16 items-center justify-between border-b border-slate-800/80 bg-slate-950/80 px-6 backdrop-blur-md">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 font-bold text-white">
             TI
           </div>
-          <span className="font-bold text-slate-200">Departamento de Informática</span>
+          <div className="flex flex-col">
+            <span className="font-bold text-slate-200 text-xs sm:text-sm leading-tight">Departamento de Informática - SEFAZ</span>
+            <span className="text-[10px] text-slate-400 font-semibold leading-tight">Prefeitura Municipal de Laguna</span>
+          </div>
         </div>
         <button
           onClick={() => navigate('/login')}
@@ -281,7 +284,7 @@ export const PublicSearch: React.FC = () => {
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-slate-800/80 bg-slate-950/40 py-6 text-center text-xs text-slate-500">
-        <p>&copy; {new Date().getFullYear()} Prefeitura Municipal de Laguna - Departamento de Informática</p>
+        <p>&copy; {new Date().getFullYear()} Prefeitura Municipal de Laguna - Departamento de Informática - SEFAZ</p>
       </footer>
     </div>
   );
