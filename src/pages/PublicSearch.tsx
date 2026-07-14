@@ -60,9 +60,9 @@ export const PublicSearch: React.FC = () => {
 
       if (isNum) {
         const num = parseInt(term, 10);
-        query = query.or(`id.eq.${num},patrimonio.eq.${num},id_legado.eq.${term}`);
+        query = query.or(`id.eq.${num},patrimonio.eq.${num},id_legado.ilike.%${term}%,locais.nome.ilike.%${term}%`);
       } else {
-        query = query.eq('id_legado', term);
+        query = query.or(`id_legado.ilike.%${term}%,locais.nome.ilike.%${term}%`);
       }
 
       const { data, error } = await query;
@@ -70,7 +70,7 @@ export const PublicSearch: React.FC = () => {
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        setErrorMsg('Nenhum computador encontrado com o código, código legado ou patrimônio informado.');
+        setErrorMsg('Nenhum computador encontrado com o código, patrimônio, legado ou setor informado.');
         setLoading(false);
         return;
       }
@@ -168,7 +168,7 @@ export const PublicSearch: React.FC = () => {
             Acompanhe sua Ordem de Serviço
           </h2>
           <p className="mt-2.5 text-base text-slate-400 max-w-lg mx-auto">
-            Insira o código interno da informática ou o número de patrimônio da máquina para ver o status em tempo real.
+            Insira o código interno, patrimônio, legado ou o setor da máquina para ver o status em tempo real.
           </p>
         </div>
 
@@ -182,7 +182,7 @@ export const PublicSearch: React.FC = () => {
               <input
                 type="text"
                 required
-                placeholder="Ex: 1045, LEG892 ou 128954..."
+                placeholder="Ex: 1045, LEG892, Financeiro ou CRAS..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="block w-full rounded-xl border border-slate-800 bg-slate-950/80 py-3.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-blue-500 focus:outline-none"
