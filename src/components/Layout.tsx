@@ -22,8 +22,8 @@ export const Layout: React.FC = () => {
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Computadores', path: '/computadores', icon: Monitor },
-    { name: 'Setores', path: '/setores', icon: MapPin },
     { name: 'Ordens de Serviço', path: '/ordens', icon: ClipboardList },
+    { name: 'Setores', path: '/setores', icon: MapPin },
   ];
 
   if (isAdmin) {
