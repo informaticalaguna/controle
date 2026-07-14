@@ -7,4 +7,10 @@ if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('SUA-URL') || supab
   console.warn('Atenção: Credenciais do Supabase não configuradas no arquivo .env!');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    storage: window.sessionStorage,
+    detectSessionInUrl: true
+  }
+});
