@@ -83,15 +83,15 @@ export const Login: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col items-center justify-center text-center pb-8 border-b border-slate-800/80">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 font-extrabold text-white text-2xl shadow-lg shadow-blue-600/30">
-            OS
+            TI
           </div>
-          <h2 className="mt-4 text-2xl font-bold tracking-tight text-white">
-            Prefeitura de Laguna
+          <h2 className="mt-4 text-xl font-bold tracking-tight text-white uppercase">
+            DEPARTAMENTO DE INFORMÁTICA - SEFAZ
           </h2>
-          <p className="mt-1.5 text-sm text-slate-400">
+          <p className="mt-1.5 text-xs text-slate-400 font-semibold">
             {recoveryMode 
-              ? 'Recuperação de Senha - Departamento de Informática' 
-              : 'Painel de Ordens de Serviço - Área Interna'}
+              ? 'Recuperação de Senha - DEPARTAMENTO DE INFORMÁTICA' 
+              : 'Prefeitura Municipal de Laguna'}
           </p>
         </div>
 
