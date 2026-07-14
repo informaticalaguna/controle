@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { 
   Monitor, 
@@ -25,6 +26,7 @@ interface OSWithDetails {
 }
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalComputers: 0,
@@ -111,6 +113,10 @@ export const Dashboard: React.FC = () => {
     if (!dateStr) return '';
     const [year, month, day] = dateStr.split('-');
     return `${day}/${month}/${year}`;
+  };
+
+  const handleCardClick = (osId: number) => {
+    navigate('/ordens', { state: { editOSId: osId } });
   };
 
   if (loading) {
@@ -204,7 +210,8 @@ export const Dashboard: React.FC = () => {
               salaTIList.map((os) => (
                 <div 
                   key={os.id}
-                  className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-200 hover:bg-slate-50 hover:shadow-sm hover:border-slate-200"
+                  onClick={() => handleCardClick(os.id)}
+                  className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-200 hover:bg-slate-50 hover:shadow-sm hover:border-slate-200 cursor-pointer active:scale-[0.99]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -214,21 +221,21 @@ export const Dashboard: React.FC = () => {
                       `}>
                         {os.status}
                       </span>
-                      <h4 className="font-bold text-sm text-slate-800">
+                      <h4 className="font-bold text-xs text-slate-800">
                         {os.computadores?.equipamentos?.nome || 'Desktop'} {os.computadores?.marcas?.nome}
                       </h4>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-[11px] text-slate-500 mt-0.5">
                         Patrimônio: <span className="font-semibold text-slate-700">{os.computadores?.patrimonio || 'N/A'}</span> 
                         {os.computadores?.id_legado && ` | Legado: ${os.computadores.id_legado}`}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-[11px] text-slate-500">
                         Setor: <span className="font-semibold text-slate-700">{os.computadores?.secretarias?.nome} ({os.computadores?.locais?.nome || 'Geral'})</span>
                       </p>
                     </div>
                     <span className="text-3xs font-medium text-slate-400 shrink-0">OS #{os.id}</span>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-2xs text-slate-500">
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-[10px] text-slate-500">
                     <p className="truncate max-w-[200px]">
                       Defeito: <span className="font-semibold text-slate-700">{os.defeitos?.nome || 'Outros'}</span>
                     </p>
@@ -262,7 +269,8 @@ export const Dashboard: React.FC = () => {
               entreguesList.map((os) => (
                 <div 
                   key={os.id}
-                  className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-200 hover:bg-slate-50 hover:shadow-sm"
+                  onClick={() => handleCardClick(os.id)}
+                  className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-200 hover:bg-slate-50 hover:shadow-sm hover:border-slate-200 cursor-pointer active:scale-[0.99]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -272,20 +280,20 @@ export const Dashboard: React.FC = () => {
                       `}>
                         {os.status}
                       </span>
-                      <h4 className="font-bold text-sm text-slate-700">
+                      <h4 className="font-bold text-xs text-slate-700">
                         {os.computadores?.equipamentos?.nome || 'Desktop'} {os.computadores?.marcas?.nome}
                       </h4>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-[11px] text-slate-500 mt-0.5">
                         Patrimônio: <span className="font-semibold text-slate-600">{os.computadores?.patrimonio || 'N/A'}</span>
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-[11px] text-slate-500">
                         Setor: <span className="font-semibold text-slate-600">{os.computadores?.secretarias?.nome}</span>
                       </p>
                     </div>
                     <span className="text-3xs font-medium text-slate-400 shrink-0">OS #{os.id}</span>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-2xs text-slate-400">
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-[10px] text-slate-400">
                     <p className="truncate max-w-[200px]">
                       Defeito: <span className="font-medium text-slate-600">{os.defeitos?.nome || 'Outros'}</span>
                     </p>
