@@ -44,6 +44,15 @@ export const PublicSearch: React.FC = () => {
       const term = searchTerm.trim();
       const isNum = /^\d+$/.test(term);
 
+      // 1. Fetch matching local IDs for sector search
+      const { data: matchedLocs, error: locError } = await supabase
+        .from('locais')
+        .select('id')
+        .ilike('nome', `%${term}%`);
+
+      if (locError) throw locError;
+
+      // 2. Build the query for computadores
       let query = supabase
         .from('computadores')
         .select(`
@@ -58,12 +67,24 @@ export const PublicSearch: React.FC = () => {
           equipamentos(nome)
         `);
 
+      const orConditions: string[] = [];
+
       if (isNum) {
         const num = parseInt(term, 10);
-        query = query.or(`id.eq.${num},patrimonio.eq.${num},id_legado.ilike.%${term}%,locais.nome.ilike.%${term}%`);
-      } else {
-        query = query.or(`id_legado.ilike.%${term}%,locais.nome.ilike.%${term}%`);
+        orConditions.push(`id.eq.${num}`);
+        orConditions.push(`patrimonio.eq.${num}`);
       }
+
+      // Add ilike conditions
+      orConditions.push(`id_legado.ilike.%${term}%`);
+
+      // Add locations if any matched
+      if (matchedLocs && matchedLocs.length > 0) {
+        const locIds = matchedLocs.map(l => l.id).join(',');
+        orConditions.push(`local_id.in.(${locIds})`);
+      }
+
+      query = query.or(orConditions.join(','));
 
       const { data, error } = await query;
 
