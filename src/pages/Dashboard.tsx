@@ -109,12 +109,6 @@ export const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    const [year, month, day] = dateStr.split('-');
-    return `${day}/${month}/${year}`;
-  };
-
   const handleCardClick = (osId: number) => {
     navigate('/ordens', { state: { editOSId: osId } });
   };
@@ -211,36 +205,29 @@ export const Dashboard: React.FC = () => {
                 <div 
                   key={os.id}
                   onClick={() => handleCardClick(os.id)}
-                  className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-200 hover:bg-slate-50 hover:shadow-sm hover:border-slate-200 cursor-pointer active:scale-[0.99]"
+                  className="group flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-2.5 transition-all duration-200 hover:bg-slate-50 hover:shadow-sm hover:border-slate-200 cursor-pointer active:scale-[0.99]"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <span className={`
-                        inline-flex items-center rounded-full px-2 py-0.5 text-3xs font-semibold uppercase tracking-wider border mb-2
-                        ${os.status === 'Pronto para retirada' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-blue-100 text-blue-800 border-blue-200'}
-                      `}>
-                        {os.status}
-                      </span>
-                      <h4 className="font-bold text-xs text-slate-800">
-                        {os.computadores?.equipamentos?.nome || 'Desktop'} {os.computadores?.marcas?.nome}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Patrimônio: <span className="font-semibold text-slate-700">{os.computadores?.patrimonio || 'N/A'}</span> 
-                        {os.computadores?.id_legado && ` | Legado: ${os.computadores.id_legado}`}
-                      </p>
-                      <p className="text-[11px] text-slate-500">
-                        Setor: <span className="font-semibold text-slate-700">{os.computadores?.secretarias?.nome} ({os.computadores?.locais?.nome || 'Geral'})</span>
-                      </p>
-                    </div>
-                    <span className="text-3xs font-medium text-slate-400 shrink-0">OS #{os.id}</span>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
+                    <span className="font-bold text-slate-700">
+                      #{os.computadores?.id || '---'}
+                      {os.computadores?.patrimonio ? ` (Patr: ${os.computadores.patrimonio})` : ''}
+                      {os.computadores?.id_legado ? ` [${os.computadores.id_legado}]` : ''}
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="font-semibold text-slate-800 uppercase">
+                      {os.computadores?.equipamentos?.nome || 'Desktop'} {os.computadores?.marcas?.nome}
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-slate-500 font-medium">
+                      {os.computadores?.secretarias?.nome} ({os.computadores?.locais?.nome || 'Geral'})
+                    </span>
                   </div>
-
-                  <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-[10px] text-slate-500">
-                    <p className="truncate max-w-[200px]">
-                      Defeito: <span className="font-semibold text-slate-700">{os.defeitos?.nome || 'Outros'}</span>
-                    </p>
-                    <p>Aberta em: {formatDate(os.data_abertura)}</p>
-                  </div>
+                  <span className={`
+                    shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border
+                    ${os.status === 'Pronto para retirada' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-blue-100 text-blue-800 border-blue-200'}
+                  `}>
+                    {os.status}
+                  </span>
                 </div>
               ))
             )}
@@ -270,35 +257,29 @@ export const Dashboard: React.FC = () => {
                 <div 
                   key={os.id}
                   onClick={() => handleCardClick(os.id)}
-                  className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-200 hover:bg-slate-50 hover:shadow-sm hover:border-slate-200 cursor-pointer active:scale-[0.99]"
+                  className="group flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-2.5 transition-all duration-200 hover:bg-slate-50 hover:shadow-sm hover:border-slate-200 cursor-pointer active:scale-[0.99]"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <span className={`
-                        inline-flex items-center rounded-full px-2 py-0.5 text-3xs font-semibold uppercase tracking-wider border mb-2
-                        ${os.status === 'Concluído' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-800 border-slate-200'}
-                      `}>
-                        {os.status}
-                      </span>
-                      <h4 className="font-bold text-xs text-slate-700">
-                        {os.computadores?.equipamentos?.nome || 'Desktop'} {os.computadores?.marcas?.nome}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Patrimônio: <span className="font-semibold text-slate-600">{os.computadores?.patrimonio || 'N/A'}</span>
-                      </p>
-                      <p className="text-[11px] text-slate-500">
-                        Setor: <span className="font-semibold text-slate-600">{os.computadores?.secretarias?.nome}</span>
-                      </p>
-                    </div>
-                    <span className="text-3xs font-medium text-slate-400 shrink-0">OS #{os.id}</span>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
+                    <span className="font-bold text-slate-700">
+                      #{os.computadores?.id || '---'}
+                      {os.computadores?.patrimonio ? ` (Patr: ${os.computadores.patrimonio})` : ''}
+                      {os.computadores?.id_legado ? ` [${os.computadores.id_legado}]` : ''}
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="font-semibold text-slate-700 uppercase">
+                      {os.computadores?.equipamentos?.nome || 'Desktop'} {os.computadores?.marcas?.nome}
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-slate-500 font-medium">
+                      {os.computadores?.secretarias?.nome} ({os.computadores?.locais?.nome || 'Geral'})
+                    </span>
                   </div>
-
-                  <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-[10px] text-slate-400">
-                    <p className="truncate max-w-[200px]">
-                      Defeito: <span className="font-medium text-slate-600">{os.defeitos?.nome || 'Outros'}</span>
-                    </p>
-                    <p>Aberta em: {formatDate(os.data_abertura)}</p>
-                  </div>
+                  <span className={`
+                    shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border
+                    ${os.status === 'Concluído' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-800 border-slate-200'}
+                  `}>
+                    {os.status}
+                  </span>
                 </div>
               ))
             )}
