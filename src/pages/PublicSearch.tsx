@@ -42,51 +42,11 @@ export const PublicSearch: React.FC = () => {
 
     try {
       const term = searchTerm.trim();
-      const isNum = /^\d+$/.test(term);
 
-      // 1. Fetch matching local IDs for sector search
-      const { data: matchedLocs, error: locError } = await supabase
-        .from('locais')
-        .select('id')
-        .ilike('nome', `%${term}%`);
-
-      if (locError) throw locError;
-
-      // 2. Build the query for computadores
-      let query = supabase
-        .from('computadores')
-        .select(`
-          id,
-          id_legado,
-          patrimonio,
-          ativo,
-          garantia_ativa,
-          secretarias(nome),
-          locais(nome),
-          marcas(nome),
-          equipamentos(nome)
-        `);
-
-      const orConditions: string[] = [];
-
-      if (isNum) {
-        const num = parseInt(term, 10);
-        orConditions.push(`id.eq.${num}`);
-        orConditions.push(`patrimonio.eq.${num}`);
-      }
-
-      // Add ilike conditions
-      orConditions.push(`id_legado.ilike.%${term}%`);
-
-      // Add locations if any matched
-      if (matchedLocs && matchedLocs.length > 0) {
-        const locIds = matchedLocs.map(l => l.id).join(',');
-        orConditions.push(`local_id.in.(${locIds})`);
-      }
-
-      query = query.or(orConditions.join(','));
-
-      const { data, error } = await query;
+      // Call the DB RPC function
+      const { data, error } = await supabase.rpc('buscar_computador_publico', {
+        search_text: term
+      });
 
       if (error) throw error;
 
@@ -96,8 +56,20 @@ export const PublicSearch: React.FC = () => {
         return;
       }
 
-      // Found computer
-      const foundComputer = data[0] as unknown as ComputerResult;
+      // Map the DB return layout to frontend ComputerResult layout
+      const dbRow = data[0];
+      const foundComputer: ComputerResult = {
+        id: dbRow.id,
+        id_legado: dbRow.id_legado,
+        patrimonio: dbRow.patrimonio,
+        ativo: dbRow.ativo,
+        garantia_ativa: dbRow.garantia_ativa,
+        secretarias: dbRow.secretaria_nome ? { nome: dbRow.secretaria_nome } : null,
+        locais: dbRow.local_nome ? { nome: dbRow.local_nome } : null,
+        marcas: dbRow.marca_nome ? { nome: dbRow.marca_nome } : null,
+        equipamentos: dbRow.equipamento_nome ? { nome: dbRow.equipamento_nome } : null
+      };
+
       setComputer(foundComputer);
 
       // Fetch latest OS

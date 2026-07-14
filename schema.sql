@@ -262,3 +262,50 @@ BEGIN
   DELETE FROM auth.users WHERE id = user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Função para busca pública insensível a maiúsculas/minúsculas e a espaços
+CREATE OR REPLACE FUNCTION public.buscar_computador_publico(search_text TEXT)
+RETURNS TABLE (
+  id INTEGER,
+  id_legado TEXT,
+  patrimonio NUMERIC,
+  ativo BOOLEAN,
+  garantia_ativa BOOLEAN,
+  secretaria_nome TEXT,
+  local_nome TEXT,
+  marca_nome TEXT,
+  equipamento_nome TEXT
+) AS $$
+DECLARE
+  clean_search TEXT;
+BEGIN
+  -- Remover todos os espaços do termo buscado e converter para minúsculas
+  clean_search := lower(replace(search_text, ' ', ''));
+
+  RETURN QUERY
+  SELECT 
+    c.id,
+    c.id_legado,
+    c.patrimonio,
+    c.ativo,
+    c.garantia_ativa,
+    s.nome AS secretaria_nome,
+    l.nome AS local_nome,
+    m.nome AS marca_nome,
+    eq.nome AS equipamento_nome
+  FROM public.computadores c
+  LEFT JOIN public.secretarias s ON c.secretaria_id = s.id
+  LEFT JOIN public.locais l ON c.local_id = l.id
+  LEFT JOIN public.marcas m ON c.marca_id = m.id
+  LEFT JOIN public.equipamentos eq ON c.equipamento_id = eq.id
+  WHERE 
+    -- 1. Comparação direta por ID numérico (se o termo puro for numérico)
+    (search_text ~ '^\d+$' AND (c.id = search_text::INTEGER OR c.patrimonio = search_text::NUMERIC))
+    OR
+    -- 2. Comparação por id_legado ignorando espaços e maiúsculas/minúsculas
+    lower(replace(c.id_legado, ' ', '')) LIKE '%' || clean_search || '%'
+    OR
+    -- 3. Comparação por local_nome ignorando espaços e maiúsculas/minúsculas
+    lower(replace(l.nome, ' ', '')) LIKE '%' || clean_search || '%';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
