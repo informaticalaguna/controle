@@ -601,16 +601,7 @@ export const Computadores: React.FC = () => {
                 </div>
                 
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400">Local/Setor</label>
-                    <button
-                      type="button"
-                      onClick={() => setLocalModalOpen(true)}
-                      className="text-3xs font-bold text-blue-600 hover:text-blue-500 hover:underline"
-                    >
-                      + Novo Local
-                    </button>
-                  </div>
+                  <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Local/Setor</label>
                   <select
                     id="local"
                     required
@@ -619,7 +610,7 @@ export const Computadores: React.FC = () => {
                     className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
                   >
                     {locais.filter(loc => loc.secretaria_id === Number(secretariaId)).length === 0 ? (
-                      <option value="">Nenhum setor cadastrado (clique em + Novo Local)</option>
+                      <option value="">Nenhum setor cadastrado para esta secretaria</option>
                     ) : (
                       locais
                         .filter(loc => loc.secretaria_id === Number(secretariaId))
