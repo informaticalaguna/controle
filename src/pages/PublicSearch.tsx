@@ -43,7 +43,7 @@ export const PublicSearch: React.FC = () => {
     try {
       const term = searchTerm.trim();
       const isNum = /^\d+$/.test(term);
-      
+
       let query = supabase
         .from('computadores')
         .select(`
@@ -168,7 +168,7 @@ export const PublicSearch: React.FC = () => {
             Acompanhe sua Ordem de Serviço
           </h2>
           <p className="mt-2.5 text-base text-slate-400 max-w-lg mx-auto">
-            Insira o código interno, código legado ou o número de patrimônio da máquina para ver o status em tempo real.
+            Insira o código interno da informática ou o número de patrimônio da máquina para ver o status em tempo real.
           </p>
         </div>
 

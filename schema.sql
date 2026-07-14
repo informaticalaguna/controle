@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     nome_completo TEXT NOT NULL,
     cargo TEXT,
     permissao TEXT NOT NULL CHECK (permissao IN ('Administrador', 'Usuário Nível 1')),
+    email TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -97,12 +98,13 @@ CREATE TABLE IF NOT EXISTS public.ordens_servico (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, nome_completo, cargo, permissao)
+  INSERT INTO public.profiles (id, nome_completo, cargo, permissao, email)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'nome_completo', 'Novo Usuário'),
     COALESCE(NEW.raw_user_meta_data->>'cargo', 'Técnico'),
-    COALESCE(NEW.raw_user_meta_data->>'permissao', 'Usuário Nível 1')
+    COALESCE(NEW.raw_user_meta_data->>'permissao', 'Usuário Nível 1'),
+    NEW.email
   );
   RETURN NEW;
 END;
@@ -200,3 +202,37 @@ CREATE POLICY "Qualquer um (mesmo não logado) lê OS" ON public.ordens_servico 
 CREATE POLICY "Qualquer logado insere OS" ON public.ordens_servico FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 CREATE POLICY "Qualquer logado atualiza OS" ON public.ordens_servico FOR UPDATE USING (auth.role() = 'authenticated');
 CREATE POLICY "Apenas Admin deleta OS" ON public.ordens_servico FOR DELETE USING (public.is_admin());
+
+-- Função para Administradores atualizarem dados e senha de Técnicos
+CREATE OR REPLACE FUNCTION public.admin_update_tecnico(
+  user_id UUID,
+  new_nome TEXT,
+  new_cargo TEXT,
+  new_permissao TEXT,
+  new_password TEXT DEFAULT NULL
+)
+RETURNS VOID AS $$
+BEGIN
+  -- Verificar se quem executa é administrador
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND permissao = 'Administrador'
+  ) THEN
+    RAISE EXCEPTION 'Acesso negado: Apenas administradores podem atualizar técnicos.';
+  END IF;
+
+  -- Atualizar perfil
+  UPDATE public.profiles
+  SET nome_completo = new_nome,
+      cargo = new_cargo,
+      permissao = new_permissao
+  WHERE id = user_id;
+
+  -- Atualizar senha em auth.users se fornecida
+  IF new_password IS NOT NULL AND new_password <> '' THEN
+    UPDATE auth.users
+    SET encrypted_password = crypt(new_password, gen_salt('bf'))
+    WHERE id = user_id;
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
