@@ -141,7 +141,7 @@ export const PublicSearch: React.FC = () => {
             TI
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-slate-200 text-xs sm:text-sm leading-tight">Departamento de Informática - SEFAZ</span>
+            <span className="font-bold text-slate-200 text-xs sm:text-sm leading-tight">DEPARTAMENTO DE INFORMÁTICA - SEFAZ</span>
             <span className="text-[10px] text-slate-400 font-semibold leading-tight">Prefeitura Municipal de Laguna</span>
           </div>
         </div>
