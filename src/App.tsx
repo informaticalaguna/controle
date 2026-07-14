@@ -10,6 +10,7 @@ import { PublicSearch } from './pages/PublicSearch';
 import { Dashboard } from './pages/Dashboard';
 import { Computadores } from './pages/Computadores';
 import { OrdensServico } from './pages/OrdensServico';
+import { Tecnicos } from './pages/Tecnicos';
 
 const App: React.FC = () => {
   return (
@@ -28,6 +29,11 @@ const App: React.FC = () => {
               <Route path="/" element={<Dashboard />} />
               <Route path="/computadores" element={<Computadores />} />
               <Route path="/ordens" element={<OrdensServico />} />
+              
+              {/* Admin Only Screens */}
+              <Route element={<ProtectedRoute requireAdmin />}>
+                <Route path="/tecnicos" element={<Tecnicos />} />
+              </Route>
             </Route>
           </Route>
 

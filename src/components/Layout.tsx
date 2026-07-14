@@ -9,11 +9,12 @@ import {
   Menu, 
   X, 
   User as UserIcon,
-  Search
+  Search,
+  Users
 } from 'lucide-react';
 
 export const Layout: React.FC = () => {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, isAdmin } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
@@ -22,6 +23,10 @@ export const Layout: React.FC = () => {
     { name: 'Computadores', path: '/computadores', icon: Monitor },
     { name: 'Ordens de Serviço', path: '/ordens', icon: ClipboardList },
   ];
+
+  if (isAdmin) {
+    menuItems.push({ name: 'Técnicos', path: '/tecnicos', icon: Users });
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
