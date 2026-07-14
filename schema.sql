@@ -135,19 +135,23 @@ CREATE OR REPLACE TRIGGER before_os_insert_or_update
   BEFORE INSERT OR UPDATE ON public.ordens_servico
   FOR EACH ROW EXECUTE FUNCTION public.update_os_status();
 
--- C. Trigger para definir criado_por automaticamente
+-- C. Trigger para definir criado_por automaticamente e travar alterações
 CREATE OR REPLACE FUNCTION public.set_os_criado_por()
 RETURNS TRIGGER AS $$
 BEGIN
-  SELECT nome_completo INTO NEW.criado_por 
-  FROM public.profiles 
-  WHERE id = auth.uid();
+  IF TG_OP = 'INSERT' THEN
+    SELECT nome_completo INTO NEW.criado_por 
+    FROM public.profiles 
+    WHERE id = auth.uid();
+  ELSIF TG_OP = 'UPDATE' THEN
+    NEW.criado_por := OLD.criado_por;
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE TRIGGER before_os_insert_criado_por
-  BEFORE INSERT ON public.ordens_servico
+  BEFORE INSERT OR UPDATE ON public.ordens_servico
   FOR EACH ROW EXECUTE FUNCTION public.set_os_criado_por();
 
 -- 6. POLÍTICAS DE SEGURANÇA (RLS)
@@ -234,5 +238,27 @@ BEGIN
     SET encrypted_password = crypt(new_password, gen_salt('bf'))
     WHERE id = user_id;
   END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Função para Administradores excluírem Técnicos
+CREATE OR REPLACE FUNCTION public.admin_delete_tecnico(user_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  -- Verificar se quem executa é administrador
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND permissao = 'Administrador'
+  ) THEN
+    RAISE EXCEPTION 'Acesso negado: Apenas administradores podem excluir técnicos.';
+  END IF;
+
+  -- Impedir de deletar a si mesmo
+  IF user_id = auth.uid() THEN
+    RAISE EXCEPTION 'Erro: Você não pode excluir a sua própria conta.';
+  END IF;
+
+  -- Deletar da tabela auth.users (o cascade cuidará do profile)
+  DELETE FROM auth.users WHERE id = user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

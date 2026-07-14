@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, Users, Shield, ShieldAlert, Loader2, Edit2, X } from 'lucide-react';
+import { UserPlus, Users, Shield, ShieldAlert, Loader2, Edit2, Trash2, X } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -76,6 +76,27 @@ export const Tecnicos: React.FC = () => {
     setPermissao(p.permissao);
     setEmail(p.email || '');
     setPassword(''); // Passwords should be set blank for editing
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (id === currentProfile?.id) {
+      alert('Erro: Você não pode excluir a sua própria conta.');
+      return;
+    }
+
+    if (window.confirm(`Tem certeza de que deseja excluir o técnico "${name}"? Suas ordens de serviço anteriores continuarão vinculadas ao nome dele.`)) {
+      setErrorMsg('');
+      setSuccessMsg('');
+      try {
+        const { error } = await supabase.rpc('admin_delete_tecnico', { user_id: id });
+        if (error) throw error;
+        setSuccessMsg(`Técnico ${name} excluído com sucesso!`);
+        fetchProfiles();
+      } catch (err: any) {
+        console.error(err);
+        setErrorMsg(err.message || 'Erro ao excluir técnico.');
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -349,13 +370,28 @@ export const Tecnicos: React.FC = () => {
                       {new Date(p.created_at).toLocaleDateString('pt-BR')}
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => handleEditClick(p)}
-                        className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                        title="Editar Técnico"
-                      >
-                        <Edit2 size={14} />
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleEditClick(p)}
+                          className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                          title="Editar Técnico"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(p.id, p.nome_completo)}
+                          disabled={p.id === currentProfile?.id}
+                          className={`
+                            rounded-lg p-1.5 transition-colors
+                            ${p.id === currentProfile?.id
+                              ? 'text-slate-300 cursor-not-allowed'
+                              : 'text-rose-600 hover:bg-rose-50 hover:text-rose-700'}
+                          `}
+                          title={p.id === currentProfile?.id ? 'Você não pode se excluir' : 'Excluir Técnico'}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
