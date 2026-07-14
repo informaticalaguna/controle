@@ -436,19 +436,24 @@ export const OrdensServico: React.FC = () => {
         <div className="overflow-x-auto rounded-2xl border border-slate-200/60 bg-white shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50 text-2xs font-semibold uppercase tracking-wider text-slate-400">
+              <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 <th className="py-4 px-6">ID da OS</th>
                 <th className="py-4 px-6">Computador (Patrimônio/Legado)</th>
                 <th className="py-4 px-6">Abertura</th>
                 <th className="py-4 px-6">Defeito Reclamado</th>
-                <th className="py-4 px-6">Status / Técnico</th>
+                <th className="py-4 px-6">Status</th>
+                <th className="py-4 px-6">Técnico</th>
                 <th className="py-4 px-6">Entrega</th>
                 <th className="py-4 px-6 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
               {filteredOrders.map((os) => (
-                <tr key={os.id} className="hover:bg-slate-50/50 transition-colors">
+                <tr 
+                  key={os.id} 
+                  onClick={() => openEditModal(os)}
+                  className="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                >
                   
                   {/* OS ID */}
                   <td className="py-4 px-6 font-bold text-slate-800">
@@ -460,11 +465,11 @@ export const OrdensServico: React.FC = () => {
                     <p className="font-semibold text-slate-800">
                       {os.computadores?.equipamentos?.nome || 'Desktop'} {os.computadores?.marcas?.nome}
                     </p>
-                    <p className="text-3xs text-slate-500 mt-0.5">
+                    <p className="text-[10px] text-slate-400 mt-0.5">
                       Patrimônio: {os.computadores?.patrimonio || '---'} 
                       {os.computadores?.id_legado && ` | Legado: ${os.computadores.id_legado}`}
                     </p>
-                    <p className="text-3xs text-slate-400">
+                    <p className="text-[10px] text-slate-400/80">
                       Setor: {os.computadores?.secretarias?.nome}
                     </p>
                   </td>
@@ -481,16 +486,20 @@ export const OrdensServico: React.FC = () => {
                     </span>
                   </td>
 
-                  {/* Status / Criado por */}
+                  {/* Status */}
                   <td className="py-4 px-6">
                     <span className={`
-                      inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-3xs font-bold border uppercase tracking-wider
+                      inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9px] font-bold border uppercase tracking-wider
                       ${getStatusBadge(os.status)}
                     `}>
                       {getStatusIcon(os.status)}
                       {os.status}
                     </span>
-                    <p className="text-3xs text-slate-400 mt-1">Técnico: {os.criado_por || 'N/A'}</p>
+                  </td>
+
+                  {/* Técnico */}
+                  <td className="py-4 px-6 text-slate-500 font-medium text-[11px]">
+                    {os.criado_por || 'N/A'}
                   </td>
 
                   {/* Entrega */}
@@ -498,7 +507,7 @@ export const OrdensServico: React.FC = () => {
                     {os.data_entrega ? (
                       <div>
                         <p className="font-semibold text-slate-700">{formatDate(os.data_entrega)}</p>
-                        <p className="text-3xs text-slate-500">Para: {os.entregue_para || 'Retirado'}</p>
+                        <p className="text-[10px] text-slate-400">Para: {os.entregue_para || 'Retirado'}</p>
                       </div>
                     ) : (
                       <span className="text-slate-400">---</span>
@@ -509,14 +518,20 @@ export const OrdensServico: React.FC = () => {
                   <td className="py-4 px-6 text-right">
                     <div className="flex justify-end gap-2">
                       <button
-                        onClick={() => openEditModal(os)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(os);
+                        }}
                         className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                         title="Ver / Editar OS"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button
-                        onClick={() => handleDelete(os.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(os.id);
+                        }}
                         disabled={!isAdmin}
                         className={`
                           rounded-lg p-1.5 transition-colors
