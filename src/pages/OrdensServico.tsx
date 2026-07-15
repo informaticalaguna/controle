@@ -201,7 +201,7 @@ export const OrdensServico: React.FC = () => {
   const openAddModal = () => {
     setIsEditing(false);
     setEditingId(null);
-    setDefeitoId(defeitos[0]?.id || '');
+    setDefeitoId('');
     setSolucaoEncontrada('');
     setFormatado(false);
     setBackupRealizado(false);
@@ -661,6 +661,19 @@ export const OrdensServico: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
               
+              {/* ID da OS */}
+              <div>
+                <label className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                  ID da OS
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  placeholder={isEditing && editingId ? `#${editingId}` : 'Gerado ao salvar'}
+                  className="block w-full rounded-xl border border-slate-200 bg-slate-100 py-2.5 px-3 text-xs text-slate-500 cursor-not-allowed"
+                />
+              </div>
+
               {/* Computer Search & Select */}
               <div>
                 <label className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
@@ -757,10 +770,10 @@ export const OrdensServico: React.FC = () => {
                   id="defeito"
                   required
                   value={defeitoId}
-                  onChange={(e) => setDefeitoId(Number(e.target.value))}
+                  onChange={(e) => setDefeitoId(e.target.value === '' ? '' : Number(e.target.value))}
                   className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
                 >
-                  <option value="">Selecione o defeito...</option>
+                  <option value="" disabled>Selecione o defeito...</option>
                   {defeitos.map(def => (
                     <option key={def.id} value={def.id}>{def.nome}</option>
                   ))}
