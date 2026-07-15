@@ -48,11 +48,13 @@ export const Layout: React.FC = () => {
       `}>
         {/* Sidebar Header */}
         <div className="flex h-16 items-center justify-between border-b border-slate-800 px-6">
-          <Link to="/" className="flex items-center gap-2 font-bold text-lg text-white">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 font-extrabold text-sm">
-              TI
-            </div>
-            <span>TI Laguna</span>
+          <Link to="/" className="flex items-center gap-2.5 font-bold text-sm text-white">
+            <img 
+              src="/logo.svg" 
+              alt="Logo" 
+              className="h-8 w-8 rounded-lg object-cover" 
+            />
+            <span>Informática - PML</span>
           </Link>
           <button 
             onClick={() => setSidebarOpen(false)}

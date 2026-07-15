@@ -206,7 +206,7 @@ export const Computadores: React.FC = () => {
     }
 
     const payload = {
-      id_legado: idLegado || null,
+      id_legado: idLegado.trim().toUpperCase() || null,
       patrimonio: patrimonio === '' ? null : Number(patrimonio),
       secretaria_id: Number(secretariaId),
       local: local.trim().toUpperCase(),
@@ -214,8 +214,8 @@ export const Computadores: React.FC = () => {
       equipamento_id: Number(equipamentoId),
       ativo,
       garantia_ativa: garantiaAtiva,
-      usuario: usuario.trim() || null,
-      observacao: observacao || null
+      usuario: usuario.trim().toUpperCase() || null,
+      observacao: observacao.trim().toUpperCase() || null
     };
 
     try {

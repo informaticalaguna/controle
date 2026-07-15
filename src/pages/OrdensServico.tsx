@@ -285,15 +285,15 @@ export const OrdensServico: React.FC = () => {
     const payload = {
       computador_id: selectedComp.id,
       defeito_id: Number(defeitoId),
-      solucao_encontrada: solucaoEncontrada || null,
+      solucao_encontrada: solucaoEncontrada.trim().toUpperCase() || null,
       formatado,
       backup_realizado: backupRealizado,
       aguardando_pecas: aguardandoPecas,
       reparo_concluido: reparoConcluido,
       entregue,
-      entregue_para: entreguePara || null,
+      entregue_para: entreguePara.trim().toUpperCase() || null,
       data_entrega: dataEntrega || null,
-      observacao: observacao || null
+      observacao: observacao.trim().toUpperCase() || null
     };
 
     try {

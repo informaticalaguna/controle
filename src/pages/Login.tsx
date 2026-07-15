@@ -82,9 +82,11 @@ export const Login: React.FC = () => {
         
         {/* Header */}
         <div className="flex flex-col items-center justify-center text-center pb-8 border-b border-slate-800/80">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 font-extrabold text-white text-2xl shadow-lg shadow-blue-600/30">
-            TI
-          </div>
+          <img 
+            src="/logo.svg" 
+            alt="Logo Informática PML" 
+            className="h-16 w-16 rounded-2xl object-cover shadow-lg shadow-blue-600/20" 
+          />
           <h2 className="mt-4 text-xl font-bold tracking-tight text-white uppercase">
             DEPARTAMENTO DE INFORMÁTICA - SEFAZ
           </h2>
