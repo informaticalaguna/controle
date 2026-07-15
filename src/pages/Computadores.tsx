@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { 
-  Plus, 
-  Search, 
-  Edit2, 
-  Trash2, 
-  X, 
-  Monitor, 
-  ShieldAlert, 
+import {
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  X,
+  Monitor,
+  ShieldAlert,
   SlidersHorizontal,
   Loader2
 } from 'lucide-react';
@@ -38,20 +38,20 @@ interface LookupTable {
 
 export const Computadores: React.FC = () => {
   const { isAdmin } = useAuth();
-  
+
   // Data States
   const [computers, setComputers] = useState<Computer[]>([]);
   const [secretarias, setSecretarias] = useState<LookupTable[]>([]);
   const [marcas, setMarcas] = useState<LookupTable[]>([]);
   const [equipamentos, setEquipamentos] = useState<LookupTable[]>([]);
-  
+
   // Loading & UI States
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSecretaria, setSelectedSecretaria] = useState('');
-  
+
   // Form States
   const [editingId, setEditingId] = useState<number | null>(null);
   const [idLegado, setIdLegado] = useState('');
@@ -64,7 +64,7 @@ export const Computadores: React.FC = () => {
   const [garantiaAtiva, setGarantiaAtiva] = useState(false);
   const [usuario, setUsuario] = useState('');
   const [observacao, setObservacao] = useState('');
-  
+
   // Errors/Success feedback
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -236,7 +236,7 @@ export const Computadores: React.FC = () => {
   };
 
   const filteredComputers = computers.filter(c => {
-    const textMatch = 
+    const textMatch =
       c.id.toString().includes(searchTerm) ||
       (c.id_legado?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (c.patrimonio?.toString() || '').includes(searchTerm);
@@ -249,7 +249,7 @@ export const Computadores: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -280,7 +280,7 @@ export const Computadores: React.FC = () => {
 
       {/* Filters Bar */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-        
+
         {/* Search */}
         <div className="relative w-full md:w-80">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
@@ -332,14 +332,14 @@ export const Computadores: React.FC = () => {
                 <th className="py-4 px-6">Patrimônio</th>
                 <th className="py-4 px-6">Equipamento / Marca</th>
                 <th className="py-4 px-6">Secretaria / Local</th>
-                <th className="py-4 px-6 text-center">Ativo / Garantia</th>
+                <th className="py-4 px-6 text-center">Ativo</th>
                 <th className="py-4 px-6 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
               {filteredComputers.map((comp) => (
                 <tr key={comp.id} className="hover:bg-slate-50/50 transition-colors">
-                  
+
                   {/* ID / Legado */}
                   <td className="py-4 px-6">
                     <p className="font-bold text-slate-800">#{comp.id}</p>
@@ -402,8 +402,8 @@ export const Computadores: React.FC = () => {
                         disabled={!isAdmin}
                         className={`
                           rounded-lg p-1.5 transition-colors
-                          ${isAdmin 
-                            ? 'text-rose-600 hover:bg-rose-50 hover:text-rose-700' 
+                          ${isAdmin
+                            ? 'text-rose-600 hover:bg-rose-50 hover:text-rose-700'
                             : 'text-slate-300 cursor-not-allowed'}
                         `}
                         title={isAdmin ? 'Excluir Computador' : 'Apenas administradores podem excluir'}
@@ -426,12 +426,12 @@ export const Computadores: React.FC = () => {
       {modalOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl animate-fade-in border border-slate-100 max-h-[90vh] overflow-y-auto">
-            
+
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="font-bold text-slate-800 text-base">
                 {isEditing ? 'Editar Computador' : 'Cadastrar Novo Computador'}
               </h3>
-              <button 
+              <button
                 onClick={() => setModalOpen(false)}
                 className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-900"
               >
@@ -440,7 +440,7 @@ export const Computadores: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-              
+
               {/* IDs */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -494,7 +494,7 @@ export const Computadores: React.FC = () => {
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label htmlFor="marca" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Marca/Modelo <span>*</span></label>
                   <select
@@ -528,7 +528,7 @@ export const Computadores: React.FC = () => {
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Local/Setor *</label>
                   <input
