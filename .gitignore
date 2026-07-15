@@ -26,3 +26,4 @@ dist-ssr
 # IDE and temporary migration files
 .gemini/
 migracao_computadores.sql
+migracao_ordens_servico.sql

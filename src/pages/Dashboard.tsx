@@ -12,7 +12,7 @@ import {
 interface OSWithDetails {
   id: number;
   data_abertura: string;
-  status: 'Em andamento' | 'Pronto para retirada' | 'Concluído' | 'Entregue';
+  status: 'Em andamento' | 'Aguardando peças' | 'Pronto para retirada' | 'Concluído' | 'Entregue';
   defeitos: { nome: string } | null;
   computadores: {
     id: number;
@@ -37,6 +37,7 @@ export const Dashboard: React.FC = () => {
 
   const [salaTIList, setSalaTIList] = useState<OSWithDetails[]>([]);
   const [entreguesList, setEntreguesList] = useState<OSWithDetails[]>([]);
+  const [totalEntregues, setTotalEntregues] = useState(0);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -49,7 +50,7 @@ export const Dashboard: React.FC = () => {
       const { count: activeCount } = await supabase
         .from('ordens_servico')
         .select('*', { count: 'exact', head: true })
-        .in('status', ['Em andamento', 'Pronto para retirada']);
+        .in('status', ['Em andamento', 'Aguardando peças', 'Pronto para retirada']);
 
       const { count: readyCount } = await supabase
         .from('ordens_servico')
@@ -92,11 +93,13 @@ export const Dashboard: React.FC = () => {
 
       const allOS = (data || []) as unknown as OSWithDetails[];
       
-      // Coluna A: Sala de TI (Em andamento, Pronto para retirada)
-      setSalaTIList(allOS.filter(os => os.status === 'Em andamento' || os.status === 'Pronto para retirada'));
+      // Coluna A: Sala de TI (Em andamento, Aguardando peças, Pronto para retirada)
+      setSalaTIList(allOS.filter(os => os.status === 'Em andamento' || os.status === 'Aguardando peças' || os.status === 'Pronto para retirada'));
       
-      // Coluna B: Entregues (Entregue, Concluído)
-      setEntreguesList(allOS.filter(os => os.status === 'Entregue' || os.status === 'Concluído'));
+      // Coluna B: Entregues (Entregue, Concluído) - Mostrando apenas as últimas 10 no feed
+      const completedAndEntregues = allOS.filter(os => os.status === 'Entregue' || os.status === 'Concluído');
+      setTotalEntregues(completedAndEntregues.length);
+      setEntreguesList(completedAndEntregues.slice(0, 10));
 
     } catch (err) {
       console.error('Erro ao buscar dados do dashboard:', err);
@@ -224,7 +227,9 @@ export const Dashboard: React.FC = () => {
                   </div>
                   <span className={`
                     shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border
-                    ${os.status === 'Pronto para retirada' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-blue-100 text-blue-800 border-blue-200'}
+                    ${os.status === 'Pronto para retirada' ? 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse' : 
+                      os.status === 'Aguardando peças' ? 'bg-red-100 text-red-800 border-red-200' : 
+                      'bg-blue-100 text-blue-800 border-blue-200'}
                   `}>
                     {os.status}
                   </span>
@@ -242,7 +247,7 @@ export const Dashboard: React.FC = () => {
               <h3 className="font-bold text-slate-800 text-base">Entregues / Concluídas</h3>
             </div>
             <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-              {entreguesList.length} Histórico
+              {totalEntregues} Histórico
             </span>
           </div>
 

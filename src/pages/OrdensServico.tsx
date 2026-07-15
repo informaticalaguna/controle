@@ -23,7 +23,7 @@ interface OS {
   computador_id: number;
   data_abertura: string;
   defeito_id: number;
-  status: 'Em andamento' | 'Pronto para retirada' | 'Concluído' | 'Entregue';
+  status: 'Em andamento' | 'Aguardando peças' | 'Pronto para retirada' | 'Concluído' | 'Entregue';
   solucao_encontrada: string | null;
   formatado: boolean;
   backup_realizado: boolean;
@@ -39,6 +39,7 @@ interface OS {
     id_legado: string | null;
     patrimonio: number | null;
     ativo?: boolean;
+    local?: string | null;
     secretarias?: { nome: string };
     marcas?: { nome: string };
     equipamentos?: { nome: string };
@@ -115,6 +116,7 @@ export const OrdensServico: React.FC = () => {
             id_legado,
             patrimonio,
             ativo,
+            local,
             secretarias(nome),
             marcas(nome),
             equipamentos(nome)
@@ -347,6 +349,8 @@ export const OrdensServico: React.FC = () => {
     switch (status) {
       case 'Em andamento':
         return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'Aguardando peças':
+        return 'bg-red-50 text-red-700 border-red-200';
       case 'Pronto para retirada':
         return 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse';
       case 'Entregue':
@@ -360,6 +364,8 @@ export const OrdensServico: React.FC = () => {
     switch (status) {
       case 'Em andamento':
         return <Clock size={12} />;
+      case 'Aguardando peças':
+        return <ShieldAlert size={12} />;
       case 'Pronto para retirada':
         return <AlertTriangle size={12} />;
       case 'Entregue':
@@ -380,6 +386,8 @@ export const OrdensServico: React.FC = () => {
       o.id.toString().includes(searchTerm) ||
       (o.computadores?.patrimonio?.toString() || '').includes(searchTerm) ||
       (o.computadores?.id_legado?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (o.computadores?.secretarias?.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (o.computadores?.local?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (o.criado_por?.toLowerCase() || '').includes(searchTerm.toLowerCase());
 
     const statusMatch = selectedStatus === '' || o.status === selectedStatus;
@@ -434,7 +442,7 @@ export const OrdensServico: React.FC = () => {
           </span>
           <input
             type="text"
-            placeholder="Buscar por ID da OS, Patrimônio, Técnico..."
+            placeholder="Buscar por ID, Patrimônio, Setor, Secretaria..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-3 text-xs text-slate-800 placeholder-slate-400 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
@@ -506,7 +514,7 @@ export const OrdensServico: React.FC = () => {
                         {os.computadores?.id_legado && ` | Legado: ${os.computadores.id_legado}`}
                       </p>
                       <p className="text-[10px] text-slate-400/80">
-                        Setor: {os.computadores?.secretarias?.nome}
+                        Setor: {os.computadores?.secretarias?.nome}{os.computadores?.local ? ` - ${os.computadores.local}` : ''}
                       </p>
                     </td>
 

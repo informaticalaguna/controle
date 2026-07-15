@@ -18,7 +18,7 @@ interface ComputerResult {
 interface OSResult {
   id: number;
   data_abertura: string;
-  status: 'Em andamento' | 'Pronto para retirada' | 'Concluído' | 'Entregue';
+  status: 'Em andamento' | 'Aguardando peças' | 'Pronto para retirada' | 'Concluído' | 'Entregue';
   solucao_encontrada: string | null;
 }
 
@@ -110,6 +110,8 @@ export const PublicSearch: React.FC = () => {
     switch (status) {
       case 'Em andamento':
         return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'Aguardando peças':
+        return 'bg-red-50 text-red-700 border-red-200';
       case 'Pronto para retirada':
         return 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse';
       case 'Entregue':
@@ -125,6 +127,8 @@ export const PublicSearch: React.FC = () => {
     switch (status) {
       case 'Em andamento':
         return <Clock size={16} className="text-blue-600" />;
+      case 'Aguardando peças':
+        return <AlertCircle size={16} className="text-red-600" />;
       case 'Pronto para retirada':
         return <AlertCircle size={16} className="text-amber-600" />;
       case 'Entregue':
@@ -276,6 +280,7 @@ export const PublicSearch: React.FC = () => {
                           {/* Explanatory Message based on status */}
                           <p className="text-xs text-slate-400">
                             {os.status === 'Em andamento' && '🔧 Sua máquina está em reparo.'}
+                            {os.status === 'Aguardando peças' && '⏳ Aguardando a chegada de peças para continuar o reparo.'}
                             {os.status === 'Pronto para retirada' && '🎉 Reparo concluído! Você já pode retirar sua máquina no Departamento de Informática.'}
                             {os.status === 'Entregue' && '📦 Equipamento entregue ao setor correspondente.'}
                             {os.status === 'Concluído' && '✅ Serviço concluído com sucesso e equipamento devolvido.'}

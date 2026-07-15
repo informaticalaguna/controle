@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS public.ordens_servico (
     computador_id INTEGER REFERENCES public.computadores(id) ON DELETE CASCADE NOT NULL,
     data_abertura DATE DEFAULT CURRENT_DATE NOT NULL,
     defeito_id INTEGER REFERENCES public.defeitos(id) NOT NULL,
-    status TEXT DEFAULT 'Em andamento' NOT NULL CHECK (status IN ('Em andamento', 'Pronto para retirada', 'Concluído', 'Entregue')),
+    status TEXT DEFAULT 'Em andamento' NOT NULL CHECK (status IN ('Em andamento', 'Aguardando peças', 'Pronto para retirada', 'Concluído', 'Entregue')),
     solucao_encontrada TEXT,
     formatado BOOLEAN DEFAULT FALSE NOT NULL,
     backup_realizado BOOLEAN DEFAULT FALSE NOT NULL,
@@ -119,6 +119,8 @@ BEGIN
     NEW.status := 'Entregue';
   ELSIF NEW.reparo_concluido = TRUE THEN
     NEW.status := 'Pronto para retirada';
+  ELSIF NEW.aguardando_pecas = TRUE THEN
+    NEW.status := 'Aguardando peças';
   ELSE
     NEW.status := 'Em andamento';
   END IF;
