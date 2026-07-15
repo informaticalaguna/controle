@@ -10,7 +10,7 @@ interface ComputerResult {
   ativo: boolean;
   garantia_ativa: boolean;
   secretarias: { nome: string } | null;
-  locais: { nome: string } | null;
+  local: string | null;
   marcas: { nome: string } | null;
   equipamentos: { nome: string } | null;
 }
@@ -27,21 +27,33 @@ export const PublicSearch: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [computer, setComputer] = useState<ComputerResult | null>(null);
-  const [latestOS, setLatestOS] = useState<OSResult | null>(null);
+  const [osList, setOsList] = useState<OSResult[]>([]);
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchTerm.trim()) return;
+    const term = searchTerm.trim();
+    if (!term) return;
+
+    // Se contiver letras, deve conter também pelo menos um número para busca por legado
+    const hasLetters = /[a-zA-Z]/.test(term);
+    const hasDigits = /\d/.test(term);
+
+    if (hasLetters && !hasDigits) {
+      setErrorMsg('Para buscar por código legado, insira a identificação completa com letras e números (Ex: ADM03).');
+      setComputer(null);
+      setOsList([]);
+      setSearched(false);
+      return;
+    }
 
     setLoading(true);
     setErrorMsg('');
     setComputer(null);
-    setLatestOS(null);
+    setOsList([]);
     setSearched(true);
 
     try {
-      const term = searchTerm.trim();
 
       // Call the DB RPC function
       const { data, error } = await supabase.rpc('buscar_computador_publico', {
@@ -51,7 +63,7 @@ export const PublicSearch: React.FC = () => {
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        setErrorMsg('Nenhum computador encontrado com o código, patrimônio, legado ou setor informado.');
+        setErrorMsg('Nenhum computador encontrado com o código, patrimônio ou legado informado.');
         setLoading(false);
         return;
       }
@@ -65,25 +77,25 @@ export const PublicSearch: React.FC = () => {
         ativo: dbRow.ativo,
         garantia_ativa: dbRow.garantia_ativa,
         secretarias: dbRow.secretaria_nome ? { nome: dbRow.secretaria_nome } : null,
-        locais: dbRow.local_nome ? { nome: dbRow.local_nome } : null,
+        local: dbRow.local_nome || null,
         marcas: dbRow.marca_nome ? { nome: dbRow.marca_nome } : null,
         equipamentos: dbRow.equipamento_nome ? { nome: dbRow.equipamento_nome } : null
       };
 
       setComputer(foundComputer);
 
-      // Fetch latest OS
-      const { data: osData, error: osError } = await supabase
-        .from('ordens_servico')
-        .select('id, data_abertura, status')
-        .eq('computador_id', foundComputer.id)
-        .order('id', { ascending: false })
-        .limit(1);
+      if (foundComputer.ativo) {
+        // Fetch all OS
+        const { data: osData, error: osError } = await supabase
+          .from('ordens_servico')
+          .select('id, data_abertura, status')
+          .eq('computador_id', foundComputer.id)
+          .order('id', { ascending: false });
 
-      if (osError) throw osError;
-
-      if (osData && osData.length > 0) {
-        setLatestOS(osData[0] as OSResult);
+        if (osError) throw osError;
+        setOsList(osData as OSResult[] || []);
+      } else {
+        setOsList([]);
       }
     } catch (err: any) {
       console.error(err);
@@ -163,8 +175,8 @@ export const PublicSearch: React.FC = () => {
           <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Acompanhe sua Ordem de Serviço
           </h2>
-          <p className="mt-2.5 text-base text-slate-400 max-w-lg mx-auto">
-            Insira o código interno, patrimônio, legado ou o setor da máquina para ver o status em tempo real.
+           <p className="mt-2.5 text-base text-slate-400 max-w-lg mx-auto">
+            Insira o código interno, patrimônio ou legado da máquina para ver o status em tempo real.
           </p>
         </div>
 
@@ -178,7 +190,7 @@ export const PublicSearch: React.FC = () => {
               <input
                 type="text"
                 required
-                placeholder="Ex: 1045, LEG892, Financeiro ou CRAS..."
+                placeholder="Ex: 1045, LEG892 ou 12093..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="block w-full rounded-xl border border-slate-800 bg-slate-950/80 py-3.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-blue-500 focus:outline-none"
@@ -203,81 +215,94 @@ export const PublicSearch: React.FC = () => {
 
           {/* Result Card */}
           {searched && !loading && computer && (
-            <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/50 p-6 shadow-xl backdrop-blur-sm">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/10">
-                    <Monitor size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-base">
-                      {computer.equipamentos?.nome || 'Computador'} {computer.marcas?.nome ? `- ${computer.marcas.nome}` : ''}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      ID: #{computer.id} {computer.id_legado ? `| Legado: ${computer.id_legado}` : ''} {computer.patrimonio ? `| Patrimônio: ${computer.patrimonio}` : ''}
-                    </p>
-                  </div>
+            !computer.ativo ? (
+              <div className="mt-8 rounded-2xl border border-rose-500/30 bg-rose-950/20 p-8 shadow-xl backdrop-blur-sm text-center max-w-xl mx-auto">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20 mx-auto mb-4">
+                  <AlertCircle size={32} />
                 </div>
-
-                <span className={`
-                  inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-2xs font-semibold uppercase tracking-wider border
-                  ${computer.ativo ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}
-                `}>
-                  {computer.ativo ? 'Ativo' : 'Inativo'}
-                </span>
-              </div>
-
-              {/* Status Section */}
-              <div className="mt-6 p-4 rounded-xl border border-slate-800 bg-slate-900/40">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">
-                  Último Status da Ordem de Serviço
+                <h3 className="font-bold text-white text-lg">Computador Inativo</h3>
+                <p className="text-xs text-slate-400 mt-2">
+                  O equipamento buscado (ID #{computer.id}) consta como inativo no sistema.
                 </p>
-
-                {latestOS ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(latestOS.status)}
-                        <span className="text-sm font-semibold text-slate-200">OS #{latestOS.id}</span>
-                      </div>
-                      <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold border uppercase tracking-wider ${getStatusBadgeClass(latestOS.status)}`}>
-                        {latestOS.status}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <Calendar size={14} />
-                      <span>Data de Abertura: {formatDate(latestOS.data_abertura)}</span>
-                    </div>
-
-                    {/* Explanatory Message based on status */}
-                    <p className="text-xs text-slate-400 mt-2">
-                      {latestOS.status === 'Em andamento' && '🔧 Sua máquina está sendo analisada pelos nossos técnicos de TI.'}
-                      {latestOS.status === 'Pronto para retirada' && '🎉 Reparo concluído! Você já pode retirar sua máquina no Departamento de Informática.'}
-                      {latestOS.status === 'Entregue' && '📦 Equipamento entregue ao setor correspondente.'}
-                      {latestOS.status === 'Concluído' && '✅ Serviço concluído com sucesso e equipamento devolvido.'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2.5 text-sm text-slate-400 py-2">
-                    <ShieldCheck size={18} className="text-emerald-500" />
-                    <span>Nenhuma Ordem de Serviço pendente para esta máquina.</span>
-                  </div>
-                )}
               </div>
+            ) : (
+              <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/50 p-6 shadow-xl backdrop-blur-sm">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/10">
+                      <Monitor size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white text-base">
+                        {computer.equipamentos?.nome || 'Computador'} {computer.marcas?.nome ? `- ${computer.marcas.nome}` : ''}
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        ID: #{computer.id} {computer.id_legado ? `| Legado: ${computer.id_legado}` : ''} {computer.patrimonio ? `| Patrimônio: ${computer.patrimonio}` : ''}
+                      </p>
+                    </div>
+                  </div>
 
-              {/* Other Specs */}
-              <div className="mt-6 grid grid-cols-2 gap-4 text-xs">
-                <div className="rounded-lg bg-slate-900/20 p-3 border border-slate-800/40">
-                  <p className="font-semibold text-slate-500">Secretaria</p>
-                  <p className="mt-1 font-bold text-slate-300">{computer.secretarias?.nome || 'N/A'}</p>
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-2xs font-semibold uppercase tracking-wider border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                    Ativo
+                  </span>
                 </div>
-                <div className="rounded-lg bg-slate-900/20 p-3 border border-slate-800/40">
-                  <p className="font-semibold text-slate-500">Setor/Local</p>
-                  <p className="mt-1 font-bold text-slate-300">{computer.locais?.nome || 'N/A'}</p>
+
+                {/* Status Section */}
+                <div className="mt-6 p-4 rounded-xl border border-slate-800 bg-slate-900/40">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">
+                    Histórico de Ordens de Serviço
+                  </p>
+
+                  {osList.length > 0 ? (
+                    <div className="space-y-6 divide-y divide-slate-800/60">
+                      {osList.map((os, idx) => (
+                        <div key={os.id} className={`${idx > 0 ? 'pt-6' : ''} space-y-3`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {getStatusIcon(os.status)}
+                              <span className="text-sm font-semibold text-slate-200">OS #{os.id}</span>
+                            </div>
+                            <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold border uppercase tracking-wider ${getStatusBadgeClass(os.status)}`}>
+                              {os.status}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <Calendar size={14} />
+                            <span>Data de Abertura: {formatDate(os.data_abertura)}</span>
+                          </div>
+
+                          {/* Explanatory Message based on status */}
+                          <p className="text-xs text-slate-400">
+                            {os.status === 'Em andamento' && '🔧 Sua máquina está em reparo.'}
+                            {os.status === 'Pronto para retirada' && '🎉 Reparo concluído! Você já pode retirar sua máquina no Departamento de Informática.'}
+                            {os.status === 'Entregue' && '📦 Equipamento entregue ao setor correspondente.'}
+                            {os.status === 'Concluído' && '✅ Serviço concluído com sucesso e equipamento devolvido.'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2.5 text-sm text-slate-400 py-2">
+                      <ShieldCheck size={18} className="text-emerald-500" />
+                      <span>Nenhuma Ordem de Serviço pendente para esta máquina.</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Other Specs */}
+                <div className="mt-6 grid grid-cols-2 gap-4 text-xs">
+                  <div className="rounded-lg bg-slate-900/20 p-3 border border-slate-800/40">
+                    <p className="font-semibold text-slate-500">Secretaria</p>
+                    <p className="mt-1 font-bold text-slate-300">{computer.secretarias?.nome || 'N/A'}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-900/20 p-3 border border-slate-800/40">
+                    <p className="font-semibold text-slate-500">Setor/Local</p>
+                    <p className="mt-1 font-bold text-slate-300">{computer.local || 'N/A'}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )
           )}
         </div>
       </main>

@@ -21,7 +21,7 @@ interface OSWithDetails {
     marcas: { nome: string } | null;
     equipamentos: { nome: string } | null;
     secretarias: { nome: string } | null;
-    locais: { nome: string } | null;
+    local: string | null;
   } | null;
 }
 
@@ -83,7 +83,7 @@ export const Dashboard: React.FC = () => {
             marcas(nome),
             equipamentos(nome),
             secretarias(nome),
-            locais(nome)
+            local
           )
         `)
         .order('id', { ascending: false });
@@ -219,7 +219,7 @@ export const Dashboard: React.FC = () => {
                     </span>
                     <span className="text-slate-300">•</span>
                     <span className="text-slate-500 font-medium">
-                      {os.computadores?.secretarias?.nome} ({os.computadores?.locais?.nome || 'Geral'})
+                      {os.computadores?.secretarias?.nome} ({os.computadores?.local || 'Geral'})
                     </span>
                   </div>
                   <span className={`
@@ -271,7 +271,7 @@ export const Dashboard: React.FC = () => {
                     </span>
                     <span className="text-slate-300">•</span>
                     <span className="text-slate-500 font-medium">
-                      {os.computadores?.secretarias?.nome} ({os.computadores?.locais?.nome || 'Geral'})
+                      {os.computadores?.secretarias?.nome} ({os.computadores?.local || 'Geral'})
                     </span>
                   </div>
                   <span className={`

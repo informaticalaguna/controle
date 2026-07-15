@@ -10,8 +10,7 @@ import {
   X, 
   User as UserIcon,
   Search,
-  Users,
-  MapPin
+  Users
 } from 'lucide-react';
 
 export const Layout: React.FC = () => {
@@ -23,7 +22,6 @@ export const Layout: React.FC = () => {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Computadores', path: '/computadores', icon: Monitor },
     { name: 'Ordens de Serviço', path: '/ordens', icon: ClipboardList },
-    { name: 'Setores', path: '/setores', icon: MapPin },
   ];
 
   if (isAdmin) {

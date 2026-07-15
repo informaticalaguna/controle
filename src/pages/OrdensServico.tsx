@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -61,6 +61,7 @@ interface ComputerSearchRow {
 export const OrdensServico: React.FC = () => {
   const { isAdmin, profile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Data States
   const [orders, setOrders] = useState<OS[]>([]);
@@ -142,10 +143,10 @@ export const OrdensServico: React.FC = () => {
       const found = orders.find(o => o.id === osId);
       if (found) {
         openEditModal(found);
-        window.history.replaceState({}, document.title);
+        navigate(location.pathname, { replace: true, state: {} });
       }
     }
-  }, [location.state, orders]);
+  }, [location.state, orders, navigate]);
 
   // Handle autocomplete query for computers
   useEffect(() => {

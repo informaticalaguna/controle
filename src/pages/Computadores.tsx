@@ -19,14 +19,14 @@ interface Computer {
   patrimonio: number | null;
   data_cadastro: string;
   secretaria_id: number;
-  local_id: number;
+  local: string;
   marca_id: number;
   equipamento_id: number;
   ativo: boolean;
   garantia_ativa: boolean;
+  usuario: string | null;
   observacao: string | null;
   secretarias?: { nome: string };
-  locais?: { nome: string };
   marcas?: { nome: string };
   equipamentos?: { nome: string };
 }
@@ -34,12 +34,6 @@ interface Computer {
 interface LookupTable {
   id: number;
   nome: string;
-}
-
-interface LocalLookup {
-  id: number;
-  nome: string;
-  secretaria_id: number;
 }
 
 export const Computadores: React.FC = () => {
@@ -50,7 +44,6 @@ export const Computadores: React.FC = () => {
   const [secretarias, setSecretarias] = useState<LookupTable[]>([]);
   const [marcas, setMarcas] = useState<LookupTable[]>([]);
   const [equipamentos, setEquipamentos] = useState<LookupTable[]>([]);
-  const [locais, setLocais] = useState<LocalLookup[]>([]);
   
   // Loading & UI States
   const [loading, setLoading] = useState(true);
@@ -64,18 +57,14 @@ export const Computadores: React.FC = () => {
   const [idLegado, setIdLegado] = useState('');
   const [patrimonio, setPatrimonio] = useState<number | ''>('');
   const [secretariaId, setSecretariaId] = useState<number | ''>('');
-  const [localId, setLocalId] = useState<number | ''>('');
+  const [local, setLocal] = useState('');
   const [marcaId, setMarcaId] = useState<number | ''>('');
   const [equipamentoId, setEquipamentoId] = useState<number | ''>('');
   const [ativo, setAtivo] = useState(true);
   const [garantiaAtiva, setGarantiaAtiva] = useState(false);
+  const [usuario, setUsuario] = useState('');
   const [observacao, setObservacao] = useState('');
   
-  // Dynamic Local creation states
-  const [newLocalName, setNewLocalName] = useState('');
-  const [localModalOpen, setLocalModalOpen] = useState(false);
-  const [submittingLocal, setSubmittingLocal] = useState(false);
-
   // Errors/Success feedback
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -90,7 +79,6 @@ export const Computadores: React.FC = () => {
         .select(`
           *,
           secretarias(nome),
-          locais(nome),
           marcas(nome),
           equipamentos(nome)
         `)
@@ -103,12 +91,10 @@ export const Computadores: React.FC = () => {
       const { data: secData } = await supabase.from('secretarias').select('*').order('nome');
       const { data: marData } = await supabase.from('marcas').select('*').order('nome');
       const { data: eqData } = await supabase.from('equipamentos').select('*').order('nome');
-      const { data: locData } = await supabase.from('locais').select('id, nome, secretaria_id').order('nome');
 
       setSecretarias(secData || []);
       setMarcas(marData || []);
       setEquipamentos(eqData || []);
-      setLocais((locData || []) as LocalLookup[]);
 
     } catch (err: any) {
       console.error(err);
@@ -122,28 +108,18 @@ export const Computadores: React.FC = () => {
     fetchData();
   }, []);
 
-  // Dynamically update localId when secretariaId changes
-  useEffect(() => {
-    if (modalOpen && secretariaId !== '') {
-      const filteredLocs = locais.filter(l => l.secretaria_id === Number(secretariaId));
-      const isCurrentLocalValid = filteredLocs.some(l => l.id === Number(localId));
-      if (!isCurrentLocalValid) {
-        setLocalId(filteredLocs[0]?.id || '');
-      }
-    }
-  }, [secretariaId, locais, modalOpen, localId]);
-
   const openAddModal = () => {
     setIsEditing(false);
     setEditingId(null);
     setIdLegado('');
     setPatrimonio('');
     setSecretariaId('');
-    setLocalId('');
+    setLocal('');
     setMarcaId(marcas[0]?.id || '');
     setEquipamentoId(equipamentos[0]?.id || '');
     setAtivo(true);
     setGarantiaAtiva(false);
+    setUsuario('');
     setObservacao('');
     setErrorMsg('');
     setSuccessMsg('');
@@ -156,46 +132,16 @@ export const Computadores: React.FC = () => {
     setIdLegado(comp.id_legado || '');
     setPatrimonio(comp.patrimonio || '');
     setSecretariaId(comp.secretaria_id);
-    setLocalId(comp.local_id);
+    setLocal(comp.local || '');
     setMarcaId(comp.marca_id);
     setEquipamentoId(comp.equipamento_id);
     setAtivo(comp.ativo);
     setGarantiaAtiva(comp.garantia_ativa);
+    setUsuario(comp.usuario || '');
     setObservacao(comp.observacao || '');
     setErrorMsg('');
     setSuccessMsg('');
     setModalOpen(true);
-  };
-
-  const handleCreateLocal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newLocalName.trim() || !secretariaId) return;
-
-    setSubmittingLocal(true);
-    setErrorMsg('');
-    try {
-      const { data, error } = await supabase
-        .from('locais')
-        .insert({ 
-          nome: newLocalName.trim().toUpperCase(),
-          secretaria_id: Number(secretariaId)
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setLocais(prev => [...prev, data as LocalLookup].sort((a, b) => a.nome.localeCompare(b.nome)));
-      setLocalId(data.id);
-      setNewLocalName('');
-      setLocalModalOpen(false);
-      setSuccessMsg('Local cadastrado com sucesso!');
-    } catch (err: any) {
-      console.error(err);
-      setErrorMsg(err.message || 'Erro ao criar local.');
-    } finally {
-      setSubmittingLocal(false);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -214,17 +160,27 @@ export const Computadores: React.FC = () => {
       setSubmitting(false);
       return;
     }
-
+    if (!secretariaId) {
+      setErrorMsg('O campo Secretaria é obrigatório.');
+      setSubmitting(false);
+      return;
+    }
+    if (!local.trim()) {
+      setErrorMsg('O campo Local/Setor é obrigatório.');
+      setSubmitting(false);
+      return;
+    }
 
     const payload = {
       id_legado: idLegado || null,
       patrimonio: patrimonio === '' ? null : Number(patrimonio),
-      secretaria_id: secretariaId !== '' ? Number(secretariaId) : null,
-      local_id: localId !== '' ? Number(localId) : null,
+      secretaria_id: Number(secretariaId),
+      local: local.trim().toUpperCase(),
       marca_id: Number(marcaId),
       equipamento_id: Number(equipamentoId),
       ativo,
       garantia_ativa: garantiaAtiva,
+      usuario: usuario.trim() || null,
       observacao: observacao || null
     };
 
@@ -408,7 +364,10 @@ export const Computadores: React.FC = () => {
                   {/* Secretaria / Local */}
                   <td className="py-4 px-6">
                     <p className="font-semibold text-slate-800">{comp.secretarias?.nome}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{comp.locais?.nome}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{comp.local}</p>
+                    {comp.usuario && (
+                      <p className="text-[10px] text-blue-600 font-medium mt-0.5">Usuário: {comp.usuario}</p>
+                    )}
                   </td>
 
                   {/* Status Badges */}
@@ -461,44 +420,7 @@ export const Computadores: React.FC = () => {
         </div>
       )}
 
-      {/* Dynamic Local Creation mini-modal */}
-      {localModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl animate-fade-in border border-slate-100">
-            <h4 className="font-bold text-slate-800 text-sm mb-4">Adicionar Novo Local/Setor</h4>
-            <form onSubmit={handleCreateLocal} className="space-y-4">
-              <div>
-                <label className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Nome do Local</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: TÉCNICO, GABINETE PREFEITO..."
-                  value={newLocalName}
-                  onChange={(e) => setNewLocalName(e.target.value)}
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
-                />
-              </div>
 
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setLocalModalOpen(false)}
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingLocal}
-                  className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-blue-600/10 hover:bg-blue-500 transition-colors disabled:opacity-50"
-                >
-                  {submittingLocal ? 'Salvando...' : 'Salvar'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Main Add/Edit Modal */}
       {modalOpen && (
@@ -592,14 +514,15 @@ export const Computadores: React.FC = () => {
               {/* Secretaria & Local */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="secretaria" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Secretaria</label>
+                  <label htmlFor="secretaria" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Secretaria *</label>
                   <select
                     id="secretaria"
+                    required
                     value={secretariaId}
                     onChange={(e) => setSecretariaId(e.target.value === '' ? '' : Number(e.target.value))}
                     className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
                   >
-                    <option value="">— Não informado —</option>
+                    <option value="" disabled>— Selecione —</option>
                     {secretarias.map(sec => (
                       <option key={sec.id} value={sec.id}>{sec.nome}</option>
                     ))}
@@ -607,21 +530,16 @@ export const Computadores: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Local/Setor</label>
-                  <select
+                  <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Local/Setor *</label>
+                  <input
                     id="local"
-                    value={localId}
-                    onChange={(e) => setLocalId(e.target.value === '' ? '' : Number(e.target.value))}
+                    type="text"
+                    required
+                    placeholder="Ex: Financeiro, Recepção..."
+                    value={local}
+                    onChange={(e) => setLocal(e.target.value)}
                     className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
-                  >
-                    <option value="">— Não informado —</option>
-                    {locais
-                      .filter(loc => secretariaId === '' || loc.secretaria_id === Number(secretariaId))
-                      .map(loc => (
-                        <option key={loc.id} value={loc.id}>{loc.nome}</option>
-                      ))
-                    }
-                  </select>
+                  />
                 </div>
               </div>
 
@@ -646,6 +564,19 @@ export const Computadores: React.FC = () => {
                   />
                   <span className="text-xs font-semibold text-slate-700">Garantia Ativa</span>
                 </label>
+              </div>
+
+              {/* Usuário do Computador */}
+              <div>
+                <label htmlFor="usuario" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Usuário do Computador</label>
+                <input
+                  id="usuario"
+                  type="text"
+                  placeholder="Ex: João Silva, Recepção principal..."
+                  value={usuario}
+                  onChange={(e) => setUsuario(e.target.value)}
+                  className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                />
               </div>
 
               {/* Observações */}

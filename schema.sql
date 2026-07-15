@@ -19,12 +19,6 @@ CREATE TABLE IF NOT EXISTS public.defeitos (
     nome TEXT UNIQUE NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS public.locais (
-    id SERIAL PRIMARY KEY,
-    nome TEXT NOT NULL,
-    secretaria_id INTEGER REFERENCES public.secretarias(id) ON DELETE CASCADE,
-    UNIQUE (nome, secretaria_id)
-);
 
 -- Popular tabelas auxiliares
 INSERT INTO public.secretarias (nome) VALUES 
@@ -65,12 +59,13 @@ CREATE TABLE IF NOT EXISTS public.computadores (
     id_legado TEXT,
     patrimonio NUMERIC UNIQUE,
     data_cadastro DATE DEFAULT CURRENT_DATE NOT NULL,
-    secretaria_id INTEGER REFERENCES public.secretarias(id),
-    local_id INTEGER REFERENCES public.locais(id),
+    secretaria_id INTEGER REFERENCES public.secretarias(id) NOT NULL,
+    local TEXT NOT NULL,
     marca_id INTEGER REFERENCES public.marcas(id),
     equipamento_id INTEGER REFERENCES public.equipamentos(id),
     ativo BOOLEAN DEFAULT TRUE NOT NULL,
     garantia_ativa BOOLEAN DEFAULT FALSE NOT NULL,
+    usuario TEXT,
     observacao TEXT
 );
 
@@ -160,7 +155,7 @@ ALTER TABLE public.secretarias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.marcas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.equipamentos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.defeitos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.locais ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE public.computadores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ordens_servico ENABLE ROW LEVEL SECURITY;
 
@@ -191,9 +186,6 @@ CREATE POLICY "Admin edita equipamentos" ON public.equipamentos FOR ALL USING (p
 
 CREATE POLICY "Qualquer logado vê defeitos" ON public.defeitos FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin edita defeitos" ON public.defeitos FOR ALL USING (public.is_admin());
-
-CREATE POLICY "Qualquer logado vê locais" ON public.locais FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Qualquer logado insere/atualiza locais" ON public.locais FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
 -- Políticas para Computadores
 CREATE POLICY "Qualquer um (mesmo não logado) lê computadores" ON public.computadores FOR SELECT USING (true);
@@ -290,22 +282,18 @@ BEGIN
     c.ativo,
     c.garantia_ativa,
     s.nome AS secretaria_nome,
-    l.nome AS local_nome,
+    c.local AS local_nome,
     m.nome AS marca_nome,
     eq.nome AS equipamento_nome
   FROM public.computadores c
   LEFT JOIN public.secretarias s ON c.secretaria_id = s.id
-  LEFT JOIN public.locais l ON c.local_id = l.id
   LEFT JOIN public.marcas m ON c.marca_id = m.id
   LEFT JOIN public.equipamentos eq ON c.equipamento_id = eq.id
   WHERE 
     -- 1. Comparação direta por ID numérico (se o termo puro for numérico)
     (search_text ~ '^\d+$' AND (c.id = search_text::INTEGER OR c.patrimonio = search_text::NUMERIC))
     OR
-    -- 2. Comparação por id_legado ignorando espaços e maiúsculas/minúsculas
-    lower(replace(c.id_legado, ' ', '')) LIKE '%' || clean_search || '%'
-    OR
-    -- 3. Comparação por local_nome ignorando espaços e maiúsculas/minúsculas
-    lower(replace(l.nome, ' ', '')) LIKE '%' || clean_search || '%';
+    -- 2. Comparação exata por id_legado ignorando espaços e maiúsculas/minúsculas
+    lower(replace(c.id_legado, ' ', '')) = clean_search;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
