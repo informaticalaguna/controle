@@ -276,7 +276,7 @@ export const Wifi: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/75 text-3xs font-bold uppercase tracking-wider text-slate-400">
+              <tr className="border-b border-slate-100 bg-slate-50/75 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 <th className="py-3.5 px-6">Local / Rede</th>
                 <th className="py-3.5 px-6">Dispositivo / IP</th>
                 <th className="py-3.5 px-6">Senha Wifi</th>
@@ -307,7 +307,7 @@ export const Wifi: React.FC = () => {
                     {/* Local / Rede */}
                     <td className="py-4 px-6">
                       <p className="font-bold text-slate-900">{net.local}</p>
-                      <p className="text-3xs text-slate-500 font-semibold mt-0.5 flex items-center gap-1">
+                      <p className="text-[10px] text-slate-500 font-semibold mt-0.5 flex items-center gap-1">
                         <WifiIcon size={10} className="text-slate-400" />
                         SSID: {net.nome_rede}
                       </p>
@@ -317,7 +317,7 @@ export const Wifi: React.FC = () => {
                     <td className="py-4 px-6">
                       <p className="text-slate-900">{net.roteador || '---'}</p>
                       {net.ip && (
-                        <p className="text-3xs font-mono text-blue-600 mt-0.5 flex items-center gap-0.5">
+                        <p className="text-[10px] font-mono text-blue-600 mt-0.5 flex items-center gap-0.5">
                           <Network size={9} />
                           {net.ip}
                         </p>
@@ -360,12 +360,12 @@ export const Wifi: React.FC = () => {
                       {net.usuario || net.senha_acesso ? (
                         <div className="space-y-0.5">
                           {net.usuario && (
-                            <p className="text-3xs text-slate-500">
+                            <p className="text-[10px] text-slate-500">
                               Usuário: <span className="font-semibold text-slate-700 bg-slate-50 px-1 py-0.2 rounded border border-slate-100">{net.usuario}</span>
                             </p>
                           )}
                           {net.senha_acesso && (
-                            <div className="flex items-center gap-1 text-3xs">
+                            <div className="flex items-center gap-1 text-[10px]">
                               <span className="text-slate-500">Senha:</span>
                               <span className="font-mono text-slate-700 bg-slate-50 px-1 py-0.2 rounded border border-slate-100 font-semibold">
                                 {revealAccess[net.id] ? net.senha_acesso : '••••••••'}
@@ -470,7 +470,7 @@ export const Wifi: React.FC = () => {
                 <h3 className="font-bold text-slate-900 text-sm">
                   {isEditing ? 'Editar Rede Wi-Fi' : 'Cadastrar Nova Rede Wi-Fi'}
                 </h3>
-                <p className="text-3xs text-slate-500 mt-0.5">
+                <p className="text-[10px] text-slate-500 mt-0.5">
                   Preencha os dados de conexão e infraestrutura do setor.
                 </p>
               </div>
@@ -489,7 +489,7 @@ export const Wifi: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 {/* Local */}
                 <div>
-                  <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                  <label htmlFor="local" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                     Local / Setor *
                   </label>
                   <input
@@ -505,7 +505,7 @@ export const Wifi: React.FC = () => {
 
                 {/* Nome da Rede */}
                 <div>
-                  <label htmlFor="ssid" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                  <label htmlFor="ssid" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                     Nome da Rede (SSID) *
                   </label>
                   <input
@@ -523,7 +523,7 @@ export const Wifi: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 {/* Roteador */}
                 <div>
-                  <label htmlFor="router" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                  <label htmlFor="router" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                     Roteador (Modelo)
                   </label>
                   <input
@@ -538,7 +538,7 @@ export const Wifi: React.FC = () => {
 
                 {/* IP */}
                 <div>
-                  <label htmlFor="ip" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                  <label htmlFor="ip" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                     Endereço IP
                   </label>
                   <input
@@ -554,7 +554,7 @@ export const Wifi: React.FC = () => {
 
               {/* Senha Wifi */}
               <div>
-                <label htmlFor="wifi_pass" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                <label htmlFor="wifi_pass" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                   Senha do Wi-Fi
                 </label>
                 <div className="relative">
@@ -573,14 +573,14 @@ export const Wifi: React.FC = () => {
               </div>
 
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
-                <p className="text-3xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
                   <Server size={11} />
                   Credenciais de Acesso ao Roteador
                 </p>
                 <div className="grid grid-cols-2 gap-4">
                   {/* Usuario Roteador */}
                   <div>
-                    <label htmlFor="router_user" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                    <label htmlFor="router_user" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                       Usuário de Acesso
                     </label>
                     <input
@@ -595,7 +595,7 @@ export const Wifi: React.FC = () => {
 
                   {/* Senha Acesso Roteador */}
                   <div>
-                    <label htmlFor="router_pass" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                    <label htmlFor="router_pass" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                       Senha de Acesso
                     </label>
                     <input
@@ -613,7 +613,7 @@ export const Wifi: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 {/* MAC LAN */}
                 <div>
-                  <label htmlFor="mac_lan" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                  <label htmlFor="mac_lan" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                     MAC LAN
                   </label>
                   <input
@@ -628,7 +628,7 @@ export const Wifi: React.FC = () => {
 
                 {/* MAC WAN */}
                 <div>
-                  <label htmlFor="mac_wan" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                  <label htmlFor="mac_wan" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                     MAC WAN
                   </label>
                   <input
