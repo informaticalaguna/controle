@@ -53,6 +53,10 @@ export const Computadores: React.FC = () => {
   const [selectedSecretaria, setSelectedSecretaria] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
+  // History States
+  const [history, setHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   // Form States
   const [editingId, setEditingId] = useState<number | null>(null);
   const [idLegado, setIdLegado] = useState('');
@@ -113,6 +117,28 @@ export const Computadores: React.FC = () => {
     setCurrentPage(1);
   }, [searchTerm, selectedSecretaria]);
 
+  const fetchHistory = async (compId: number) => {
+    setLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('historico_computadores')
+        .select(`
+          *,
+          sec_anterior:secretaria_anterior_id(nome),
+          sec_nova:secretaria_nova_id(nome)
+        `)
+        .eq('computador_id', compId)
+        .order('data_alteracao', { ascending: false });
+
+      if (error) throw error;
+      setHistory(data || []);
+    } catch (err: any) {
+      console.error('Erro ao buscar histórico:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   const openAddModal = () => {
     setIsEditing(false);
     setEditingId(null);
@@ -128,6 +154,7 @@ export const Computadores: React.FC = () => {
     setObservacao('');
     setErrorMsg('');
     setSuccessMsg('');
+    setHistory([]);
     setModalOpen(true);
   };
 
@@ -146,7 +173,9 @@ export const Computadores: React.FC = () => {
     setObservacao(comp.observacao || '');
     setErrorMsg('');
     setSuccessMsg('');
+    setHistory([]);
     setModalOpen(true);
+    fetchHistory(comp.id);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -494,7 +523,7 @@ export const Computadores: React.FC = () => {
       {/* Main Add/Edit Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl animate-fade-in border border-slate-100 max-h-[90vh] overflow-y-auto">
+          <div className={`w-full rounded-2xl bg-white p-6 shadow-xl animate-fade-in border border-slate-100 max-h-[90vh] overflow-y-auto transition-all ${isEditing ? 'max-w-4xl' : 'max-w-lg'}`}>
 
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="font-bold text-slate-800 text-base">
@@ -508,178 +537,237 @@ export const Computadores: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+            <div className={`mt-4 ${isEditing ? 'grid grid-cols-1 md:grid-cols-2 gap-6 items-start' : ''}`}>
+              <form onSubmit={handleSubmit} className="space-y-4">
 
-              {/* IDs */}
-              <div className="grid grid-cols-2 gap-4">
+                {/* IDs */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">ID (Automático)</label>
+                    <input
+                      type="text"
+                      disabled
+                      placeholder={isEditing && editingId ? `#${editingId}` : 'Gerado ao salvar'}
+                      className="block w-full rounded-xl border border-slate-200 bg-slate-100 py-2.5 px-3 text-xs text-slate-500 cursor-not-allowed"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="id-legado" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">ID Legado</label>
+                    <input
+                      id="id-legado"
+                      type="text"
+                      placeholder="Ex: LENOVO-928"
+                      value={idLegado}
+                      onChange={(e) => setIdLegado(e.target.value)}
+                      className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Patrimonio */}
                 <div>
-                  <label className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">ID (Automático)</label>
+                  <label htmlFor="patrimonio" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Nº de Patrimônio</label>
                   <input
+                    id="patrimonio"
+                    type="number"
+                    placeholder="Ex: 12093"
+                    value={patrimonio}
+                    onChange={(e) => setPatrimonio(e.target.value === '' ? '' : Number(e.target.value))}
+                    className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                {/* Lookup selectors */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="equipamento" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Computador <span>*</span></label>
+                    <select
+                      id="equipamento"
+                      required
+                      value={equipamentoId}
+                      onChange={(e) => setEquipamentoId(Number(e.target.value))}
+                      className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                    >
+                      {equipamentos.map(eq => (
+                        <option key={eq.id} value={eq.id}>{eq.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="marca" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Marca/Modelo <span>*</span></label>
+                    <select
+                      id="marca"
+                      required
+                      value={marcaId}
+                      onChange={(e) => setMarcaId(Number(e.target.value))}
+                      className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                    >
+                      {marcas.map(m => (
+                        <option key={m.id} value={m.id}>{m.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Secretaria & Local */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="secretaria" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Secretaria *</label>
+                    <select
+                      id="secretaria"
+                      required
+                      value={secretariaId}
+                      onChange={(e) => setSecretariaId(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                    >
+                      <option value="" disabled>— Selecione —</option>
+                      {secretarias.map(sec => (
+                        <option key={sec.id} value={sec.id}>{sec.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Local/Setor *</label>
+                    <input
+                      id="local"
+                      type="text"
+                      required
+                      placeholder="Ex: Financeiro, Recepção..."
+                      value={local}
+                      onChange={(e) => setLocal(e.target.value)}
+                      className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Checkboxes */}
+                <div className="flex gap-6 pt-2">
+                  <label className="relative flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={ativo}
+                      onChange={(e) => setAtivo(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                    />
+                    <span className="text-xs font-semibold text-slate-700">Computador Ativo</span>
+                  </label>
+
+                  <label className="relative flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={garantiaAtiva}
+                      onChange={(e) => setGarantiaAtiva(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                    />
+                    <span className="text-xs font-semibold text-slate-700">Garantia Ativa</span>
+                  </label>
+                </div>
+
+                {/* Usuário do Computador */}
+                <div>
+                  <label htmlFor="usuario" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Usuário do Computador</label>
+                  <input
+                    id="usuario"
                     type="text"
-                    disabled
-                    placeholder={isEditing && editingId ? `#${editingId}` : 'Gerado ao salvar'}
-                    className="block w-full rounded-xl border border-slate-200 bg-slate-100 py-2.5 px-3 text-xs text-slate-500 cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="id-legado" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">ID Legado</label>
-                  <input
-                    id="id-legado"
-                    type="text"
-                    placeholder="Ex: LENOVO-928"
-                    value={idLegado}
-                    onChange={(e) => setIdLegado(e.target.value)}
+                    placeholder="Ex: João Silva, Recepção principal..."
+                    value={usuario}
+                    onChange={(e) => setUsuario(e.target.value)}
                     className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
                   />
                 </div>
-              </div>
 
-              {/* Patrimonio */}
-              <div>
-                <label htmlFor="patrimonio" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Nº de Patrimônio</label>
-                <input
-                  id="patrimonio"
-                  type="number"
-                  placeholder="Ex: 12093"
-                  value={patrimonio}
-                  onChange={(e) => setPatrimonio(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
-                />
-              </div>
-
-              {/* Lookup selectors */}
-              <div className="grid grid-cols-2 gap-4">
+                {/* Observações */}
                 <div>
-                  <label htmlFor="equipamento" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Computador <span>*</span></label>
-                  <select
-                    id="equipamento"
-                    required
-                    value={equipamentoId}
-                    onChange={(e) => setEquipamentoId(Number(e.target.value))}
+                  <label htmlFor="obs-computador" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Observações</label>
+                  <textarea
+                    id="obs-computador"
+                    rows={2}
+                    placeholder="Informações adicionais sobre hardware, peças ou licenças..."
+                    value={observacao}
+                    onChange={(e) => setObservacao(e.target.value)}
                     className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
                   >
-                    {equipamentos.map(eq => (
-                      <option key={eq.id} value={eq.id}>{eq.nome}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="marca" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Marca/Modelo <span>*</span></label>
-                  <select
-                    id="marca"
-                    required
-                    value={marcaId}
-                    onChange={(e) => setMarcaId(Number(e.target.value))}
-                    className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-blue-600/10 hover:bg-blue-500 transition-colors disabled:opacity-50"
                   >
-                    {marcas.map(m => (
-                      <option key={m.id} value={m.id}>{m.nome}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Secretaria & Local */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="secretaria" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Secretaria *</label>
-                  <select
-                    id="secretaria"
-                    required
-                    value={secretariaId}
-                    onChange={(e) => setSecretariaId(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
-                  >
-                    <option value="" disabled>— Selecione —</option>
-                    {secretarias.map(sec => (
-                      <option key={sec.id} value={sec.id}>{sec.nome}</option>
-                    ))}
-                  </select>
+                    {submitting ? 'Salvando...' : 'Salvar Computador'}
+                  </button>
                 </div>
 
-                <div>
-                  <label htmlFor="local" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Local/Setor *</label>
-                  <input
-                    id="local"
-                    type="text"
-                    required
-                    placeholder="Ex: Financeiro, Recepção..."
-                    value={local}
-                    onChange={(e) => setLocal(e.target.value)}
-                    className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
-                  />
+              </form>
+
+              {isEditing && (
+                <div className="space-y-4 border-t md:border-t-0 md:border-l border-slate-100 pt-6 md:pt-0 md:pl-6 max-h-[70vh] overflow-y-auto pr-2">
+                  <h4 className="font-bold text-slate-800 text-sm">Histórico de Movimentações</h4>
+                  {loadingHistory ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="animate-spin text-blue-600" size={24} />
+                    </div>
+                  ) : history.length === 0 ? (
+                    <p className="text-2xs text-slate-400 py-6 text-center">Nenhuma movimentação registrada.</p>
+                  ) : (
+                    <div className="space-y-4 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
+                      {history.map((item) => (
+                        <div key={item.id} className="relative pl-6 text-2xs space-y-1">
+                          {/* Timeline dot */}
+                          <div className="absolute left-[5px] top-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 border border-white shadow-sm" />
+                          
+                          <p className="font-semibold text-slate-700">
+                            {new Date(item.data_alteracao).toLocaleDateString('pt-BR')} às{' '}
+                            {new Date(item.data_alteracao).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                          
+                          <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 space-y-1.5 text-slate-600">
+                            {item.secretaria_anterior_id !== item.secretaria_nova_id && (
+                              <p className="leading-relaxed">
+                                <span className="font-semibold text-slate-400 block mb-0.5 text-3xs uppercase tracking-wide">Secretaria</span>
+                                <span className="line-through text-slate-400/80 mr-1.5">{item.sec_anterior?.nome || 'N/A'}</span>
+                                <span className="text-slate-400 mr-1.5">➔</span>
+                                <span className="font-bold text-slate-800">{item.sec_nova?.nome || 'N/A'}</span>
+                              </p>
+                            )}
+                            {item.local_anterior !== item.local_novo && (
+                              <p className="leading-relaxed">
+                                <span className="font-semibold text-slate-400 block mb-0.5 text-3xs uppercase tracking-wide">Local/Setor</span>
+                                <span className="line-through text-slate-400/80 mr-1.5">{item.local_anterior || 'N/A'}</span>
+                                <span className="text-slate-400 mr-1.5">➔</span>
+                                <span className="font-bold text-slate-800">{item.local_novo || 'N/A'}</span>
+                              </p>
+                            )}
+                            {item.usuario_anterior !== item.usuario_novo && (
+                              <p className="leading-relaxed">
+                                <span className="font-semibold text-slate-400 block mb-0.5 text-3xs uppercase tracking-wide">Usuário/Dono</span>
+                                <span className="line-through text-slate-400/80 mr-1.5">{item.usuario_anterior || 'N/A'}</span>
+                                <span className="text-slate-400 mr-1.5">➔</span>
+                                <span className="font-bold text-slate-800">{item.usuario_novo || 'N/A'}</span>
+                              </p>
+                            )}
+                          </div>
+                          <p className="text-3xs text-slate-400">
+                            Alterado por: <span className="font-medium text-slate-600">{item.alterado_por}</span>
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-
-              {/* Checkboxes */}
-              <div className="flex gap-6 pt-2">
-                <label className="relative flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={ativo}
-                    onChange={(e) => setAtivo(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
-                  />
-                  <span className="text-xs font-semibold text-slate-700">Computador Ativo</span>
-                </label>
-
-                <label className="relative flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={garantiaAtiva}
-                    onChange={(e) => setGarantiaAtiva(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
-                  />
-                  <span className="text-xs font-semibold text-slate-700">Garantia Ativa</span>
-                </label>
-              </div>
-
-              {/* Usuário do Computador */}
-              <div>
-                <label htmlFor="usuario" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Usuário do Computador</label>
-                <input
-                  id="usuario"
-                  type="text"
-                  placeholder="Ex: João Silva, Recepção principal..."
-                  value={usuario}
-                  onChange={(e) => setUsuario(e.target.value)}
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
-                />
-              </div>
-
-              {/* Observações */}
-              <div>
-                <label htmlFor="obs-computador" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Observações</label>
-                <textarea
-                  id="obs-computador"
-                  rows={2}
-                  placeholder="Informações adicionais sobre hardware, peças ou licenças..."
-                  value={observacao}
-                  onChange={(e) => setObservacao(e.target.value)}
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
-                />
-              </div>
-
-              {/* Buttons */}
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-blue-600/10 hover:bg-blue-500 transition-colors disabled:opacity-50"
-                >
-                  {submitting ? 'Salvando...' : 'Salvar Computador'}
-                </button>
-              </div>
-
-            </form>
+              )}
+            </div>
           </div>
         </div>
       )}
