@@ -453,27 +453,28 @@ export const Wifi: React.FC = () => {
 
           {/* Modal Content */}
           <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            {/* Close Button */}
-            <button
-              onClick={() => setModalOpen(false)}
-              className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-            >
-              <X size={18} />
-            </button>
-
-            {/* Modal Title */}
-            <div className="mb-6 flex items-center gap-2 border-b border-slate-100 pb-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                <WifiIcon size={18} />
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100 mb-6">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 shrink-0">
+                  <WifiIcon size={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    {isEditing ? 'Editar Rede Wi-Fi' : 'Cadastrar Nova Rede Wi-Fi'}
+                  </h3>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Preencha os dados de conexão e infraestrutura do setor.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-sm">
-                  {isEditing ? 'Editar Rede Wi-Fi' : 'Cadastrar Nova Rede Wi-Fi'}
-                </h3>
-                <p className="text-[10px] text-slate-500 mt-0.5">
-                  Preencha os dados de conexão e infraestrutura do setor.
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
             </div>
 
             {/* Form Error Notification */}
