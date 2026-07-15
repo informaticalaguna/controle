@@ -76,6 +76,8 @@ export const OrdensServico: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
   // Form States
@@ -123,6 +125,7 @@ export const OrdensServico: React.FC = () => {
           ),
           defeitos (nome)
         `)
+        .order('data_abertura', { ascending: false })
         .order('id', { ascending: false });
 
       if (osErr) throw osErr;
@@ -145,7 +148,7 @@ export const OrdensServico: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedStatus]);
+  }, [searchTerm, selectedStatus, startDate, endDate]);
 
   useEffect(() => {
     if (location.state && (location.state as any).editOSId && orders.length > 0) {
@@ -390,12 +393,19 @@ export const OrdensServico: React.FC = () => {
       (o.computadores?.local?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (o.criado_por?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       o.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      formatDate(o.data_abertura).includes(searchTerm) ||
-      (o.data_entrega ? formatDate(o.data_entrega) : '').includes(searchTerm);
+      formatDate(o.data_abertura).includes(searchTerm);
 
     const statusMatch = selectedStatus === '' || o.status === selectedStatus;
 
-    return textMatch && statusMatch;
+    let dateRangeMatch = true;
+    if (startDate) {
+      dateRangeMatch = dateRangeMatch && o.data_abertura >= startDate;
+    }
+    if (endDate) {
+      dateRangeMatch = dateRangeMatch && o.data_abertura <= endDate;
+    }
+
+    return textMatch && statusMatch && dateRangeMatch;
   });
 
   const itemsPerPage = 50;
@@ -445,26 +455,65 @@ export const OrdensServico: React.FC = () => {
           </span>
           <input
             type="text"
-            placeholder="Buscar por ID, Patrimônio, Setor, Data, Status..."
+            placeholder="Buscar por ID, Patrimônio, Setor, Data de Abertura, Status..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-3 text-xs text-slate-800 placeholder-slate-400 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
           />
         </div>
 
-        {/* Status Filter */}
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          className="block w-full md:w-48 rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 px-3 text-xs text-slate-700 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
-        >
-          <option value="">Todos os Status</option>
-          <option value="Em andamento">Em andamento</option>
-          <option value="Aguardando peças">Aguardando peças</option>
-          <option value="Pronto para retirada">Pronto para retirada</option>
-          <option value="Entregue">Entregue</option>
-          <option value="Concluído">Concluído</option>
-        </select>
+        {/* Date range filter and status filter */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          {/* Start Date */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-3xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">De:</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="block w-full sm:w-auto rounded-xl border border-slate-200 bg-slate-50/50 py-2 px-2.5 text-xs text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none"
+            />
+          </div>
+
+          {/* End Date */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-3xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">Até:</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="block w-full sm:w-auto rounded-xl border border-slate-200 bg-slate-50/50 py-2 px-2.5 text-xs text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none"
+            />
+          </div>
+
+          {/* Clear Dates Button */}
+          {(startDate || endDate) && (
+            <button
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+              }}
+              className="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+              title="Limpar datas"
+            >
+              <X size={14} />
+            </button>
+          )}
+
+          {/* Status Filter */}
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="block w-full sm:w-48 rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 px-3 text-xs text-slate-700 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
+          >
+            <option value="">Todos os Status</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Aguardando peças">Aguardando peças</option>
+            <option value="Pronto para retirada">Pronto para retirada</option>
+            <option value="Entregue">Entregue</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+        </div>
 
       </div>
 
