@@ -60,7 +60,7 @@ export const Dashboard: React.FC = () => {
       const { count: completedCount } = await supabase
         .from('ordens_servico')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'Concluído');
+        .in('status', ['Concluído', 'Entregue']);
 
       setStats({
         totalComputers: compCount || 0,
@@ -175,7 +175,7 @@ export const Dashboard: React.FC = () => {
             <CheckCircle size={22} />
           </div>
           <div>
-            <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400">Concluídos</p>
+            <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400">Concluídos / Entregues</p>
             <p className="text-2xl font-bold text-slate-800 mt-1">{stats.completedOS}</p>
           </div>
         </div>
