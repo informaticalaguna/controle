@@ -38,6 +38,7 @@ interface OS {
     id: number;
     id_legado: string | null;
     patrimonio: number | null;
+    ativo?: boolean;
     secretarias?: { nome: string };
     marcas?: { nome: string };
     equipamentos?: { nome: string };
@@ -56,6 +57,7 @@ interface ComputerSearchRow {
   patrimonio: number | null;
   secretarias: { nome: string } | null;
   marcas: { nome: string } | null;
+  ativo: boolean;
 }
 
 export const OrdensServico: React.FC = () => {
@@ -111,6 +113,7 @@ export const OrdensServico: React.FC = () => {
             id,
             id_legado,
             patrimonio,
+            ativo,
             secretarias(nome),
             marcas(nome),
             equipamentos(nome)
@@ -163,8 +166,7 @@ export const OrdensServico: React.FC = () => {
         
         let query = supabase
           .from('computadores')
-          .select('id, id_legado, patrimonio, secretarias(nome), marcas(nome)')
-          .eq('ativo', true);
+          .select('id, id_legado, patrimonio, secretarias(nome), marcas(nome), ativo');
 
         if (isNum) {
           const num = parseInt(term, 10);
@@ -235,6 +237,7 @@ export const OrdensServico: React.FC = () => {
         id: os.computadores.id,
         id_legado: os.computadores.id_legado,
         patrimonio: os.computadores.patrimonio,
+        ativo: os.computadores.ativo ?? true,
         secretarias: os.computadores.secretarias || null,
         marcas: os.computadores.marcas || null
       });
@@ -252,7 +255,13 @@ export const OrdensServico: React.FC = () => {
     setSubmitting(true);
 
     if (!selectedComp) {
-      setErrorMsg('Selecione um computador ativo para esta OS.');
+      setErrorMsg('Selecione um computador para esta OS.');
+      setSubmitting(false);
+      return;
+    }
+
+    if (!selectedComp.ativo) {
+      setErrorMsg('Não é permitido abrir ou editar Ordens de Serviço para computadores inativos.');
       setSubmitting(false);
       return;
     }
@@ -645,6 +654,10 @@ export const OrdensServico: React.FC = () => {
                           <div
                             key={comp.id}
                             onClick={() => {
+                              if (!comp.ativo) {
+                                alert('Atenção: Este computador está INATIVO no sistema e não pode receber novas Ordens de Serviço.');
+                                return;
+                              }
                               setSelectedComp(comp);
                               setCompSearchResults([]);
                               setCompSearch('');
@@ -652,9 +665,14 @@ export const OrdensServico: React.FC = () => {
                             className="p-3 text-xs hover:bg-slate-50 cursor-pointer flex justify-between items-center"
                           >
                             <div>
-                              <p className="font-bold text-slate-800">
+                              <p className="font-bold text-slate-800 flex items-center gap-1.5">
                                 {comp.patrimonio ? `Patrimônio: ${comp.patrimonio}` : 'Sem Patrimônio'}
                                 {comp.id_legado && ` (Legado: ${comp.id_legado})`}
+                                {!comp.ativo && (
+                                  <span className="inline-flex items-center rounded-full bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-600 border border-rose-100 uppercase tracking-wider">
+                                    Inativo
+                                  </span>
+                                )}
                               </p>
                               <p className="text-3xs text-slate-400 mt-0.5">Secretaria: {comp.secretarias?.nome || 'N/A'}</p>
                             </div>
