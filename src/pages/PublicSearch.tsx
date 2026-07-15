@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Search, Monitor, Calendar, AlertCircle, ShieldCheck, LogIn, Clock, CheckCircle, Package } from 'lucide-react';
+import { Search, Monitor, Calendar, AlertCircle, ShieldCheck, LogIn, Clock, CheckCircle, Package, RotateCw } from 'lucide-react';
 
 interface ComputerResult {
   id: number;
@@ -31,10 +31,99 @@ export const PublicSearch: React.FC = () => {
   const [osList, setOsList] = useState<OSResult[]>([]);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // CAPTCHA States and Ref
+  const [captchaText, setCaptchaText] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  const generateCaptchaText = () => {
+    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz';
+    let text = '';
+    for (let i = 0; i < 5; i++) {
+      text += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return text;
+  };
+
+  const drawCaptcha = (text: string) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Clear
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Background
+    ctx.fillStyle = '#0b1329'; // Dark Slate matching theme
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Noise lines
+    for (let i = 0; i < 4; i++) {
+      ctx.strokeStyle = `rgba(59, 130, 246, ${0.15 + Math.random() * 0.15})`; // blue-500 opacity
+      ctx.lineWidth = 1.5 + Math.random() * 1.5;
+      ctx.beginPath();
+      ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+      ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+      ctx.stroke();
+    }
+
+    // Noise dots
+    for (let i = 0; i < 25; i++) {
+      ctx.fillStyle = `rgba(16, 185, 129, ${0.15 + Math.random() * 0.15})`; // emerald-500 opacity
+      ctx.beginPath();
+      ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 1 + Math.random() * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Distorted Text
+    ctx.textBaseline = 'middle';
+    const charWidth = canvas.width / text.length;
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      ctx.font = `bold ${20 + Math.random() * 6}px monospace`;
+      ctx.fillStyle = i % 2 === 0 ? '#3b82f6' : '#10b981'; // Alternating blue and emerald
+
+      ctx.save();
+      const x = charWidth * i + charWidth / 2;
+      const y = canvas.height / 2 + (Math.random() - 0.5) * 8;
+      ctx.translate(x, y);
+
+      const angle = (Math.random() - 0.5) * 0.4; // random angle in radians
+      ctx.rotate(angle);
+
+      ctx.fillText(char, -8, 0);
+      ctx.restore();
+    }
+  };
+
+  const refreshCaptcha = () => {
+    setCaptchaText(generateCaptchaText());
+    setCaptchaInput('');
+  };
+
+  // Initialize and draw captcha
+  React.useEffect(() => {
+    setCaptchaText(generateCaptchaText());
+  }, []);
+
+  React.useEffect(() => {
+    if (captchaText) {
+      drawCaptcha(captchaText);
+    }
+  }, [captchaText]);
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     const term = searchTerm.trim();
     if (!term) return;
+
+    // Validate CAPTCHA
+    if (captchaInput.trim().toLowerCase() !== captchaText.toLowerCase()) {
+      setErrorMsg('Código de verificação de segurança incorreto. Tente novamente.');
+      refreshCaptcha();
+      return;
+    }
 
     // Se contiver letras, deve conter também pelo menos um número para busca por legado
     const hasLetters = /[a-zA-Z]/.test(term);
@@ -45,6 +134,7 @@ export const PublicSearch: React.FC = () => {
       setComputer(null);
       setOsList([]);
       setSearched(false);
+      refreshCaptcha();
       return;
     }
 
@@ -103,6 +193,7 @@ export const PublicSearch: React.FC = () => {
       setErrorMsg('Ocorreu um erro ao realizar a busca. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
+      refreshCaptcha();
     }
   };
 
@@ -186,33 +277,88 @@ export const PublicSearch: React.FC = () => {
         </div>
 
         {/* Search Input Box */}
-        <div className="w-full max-w-xl">
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <div className="relative flex-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
-                <Search size={18} />
-              </span>
-              <input
-                type="text"
-                required
-                placeholder="Ex: 1045, LEG892 ou 12093..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full rounded-xl border border-slate-800 bg-slate-950/80 py-3.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-blue-500 focus:outline-none"
-              />
+        <div className="w-full max-w-xl bg-slate-950/40 border border-slate-800/60 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
+          <form onSubmit={handleSearch} className="space-y-4">
+            <div className="relative">
+              <label htmlFor="search-input" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Identificação do Equipamento
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                  <Search size={18} />
+                </span>
+                <input
+                  id="search-input"
+                  type="text"
+                  required
+                  placeholder="Ex: 1045, LEG892 ou 12093..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="block w-full rounded-xl border border-slate-800 bg-slate-950/80 py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-blue-500 focus:outline-none"
+                />
+              </div>
             </div>
+
+            {/* Captcha Section */}
+            <div className="rounded-xl border border-slate-800/80 bg-slate-900/30 p-4">
+              <label htmlFor="captcha-input" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Verificação de Segurança
+              </label>
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                {/* Canvas container */}
+                <div className="relative flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950 p-1">
+                  <canvas
+                    ref={canvasRef}
+                    width={130}
+                    height={40}
+                    className="rounded bg-slate-950"
+                  />
+                  <button
+                    type="button"
+                    onClick={refreshCaptcha}
+                    title="Atualizar código"
+                    className="p-2 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    <RotateCw size={16} />
+                  </button>
+                </div>
+                
+                {/* Input for captcha */}
+                <input
+                  id="captcha-input"
+                  type="text"
+                  required
+                  maxLength={5}
+                  placeholder="Código de 5 dígitos"
+                  value={captchaInput}
+                  onChange={(e) => setCaptchaInput(e.target.value)}
+                  className="flex-1 w-full rounded-lg border border-slate-800 bg-slate-950/80 px-3 py-2 text-sm text-white placeholder-slate-500 text-center uppercase tracking-widest font-mono transition-all focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 hover:bg-blue-500 disabled:opacity-50 transition-colors"
+              className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 hover:bg-blue-500 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
-              {loading ? 'Buscando...' : 'Buscar'}
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Buscando...
+                </>
+              ) : (
+                'Buscar Equipamento'
+              )}
             </button>
           </form>
 
           {/* Error Message */}
           {errorMsg && (
-            <div className="mt-6 flex items-start gap-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 p-4 text-sm text-rose-400">
+            <div className="mt-4 flex items-start gap-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 p-4 text-sm text-rose-400">
               <AlertCircle size={18} className="shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
