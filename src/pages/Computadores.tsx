@@ -51,6 +51,7 @@ export const Computadores: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSecretaria, setSelectedSecretaria] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Form States
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -107,6 +108,10 @@ export const Computadores: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedSecretaria]);
 
   const openAddModal = () => {
     setIsEditing(false);
@@ -246,6 +251,12 @@ export const Computadores: React.FC = () => {
     return textMatch && secMatch;
   });
 
+  const itemsPerPage = 50;
+  const totalItems = filteredComputers.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedComputers = filteredComputers.slice(startIndex, startIndex + itemsPerPage);
+
 
   return (
     <div className="space-y-6">
@@ -324,99 +335,157 @@ export const Computadores: React.FC = () => {
           <p className="text-xs text-slate-400">Limpe os filtros ou cadastre um novo computador.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200/60 bg-white shadow-sm">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                <th className="py-4 px-6">ID / Legado</th>
-                <th className="py-4 px-6">Patrimônio</th>
-                <th className="py-4 px-6">Equipamento / Marca</th>
-                <th className="py-4 px-6">Secretaria / Local</th>
-                <th className="py-4 px-6 text-center">Ativo</th>
-                <th className="py-4 px-6 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {filteredComputers.map((comp) => (
-                <tr key={comp.id} className="hover:bg-slate-50/50 transition-colors">
+        <div className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  <th className="py-4 px-6">ID / Legado</th>
+                  <th className="py-4 px-6">Patrimônio</th>
+                  <th className="py-4 px-6">Equipamento / Marca</th>
+                  <th className="py-4 px-6">Secretaria / Local</th>
+                  <th className="py-4 px-6 text-center">Ativo</th>
+                  <th className="py-4 px-6 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {paginatedComputers.map((comp) => (
+                  <tr key={comp.id} className="hover:bg-slate-50/50 transition-colors">
 
-                  {/* ID / Legado */}
-                  <td className="py-4 px-6">
-                    <p className="font-bold text-slate-800">#{comp.id}</p>
-                    {comp.id_legado && (
-                      <span className="inline-flex rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-semibold text-slate-400 uppercase tracking-wider mt-1 border border-slate-100">
-                        Legado: {comp.id_legado}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Patrimonio */}
-                  <td className="py-4 px-6 font-semibold text-slate-700">
-                    {comp.patrimonio || '---'}
-                  </td>
-
-                  {/* Equipamento / Marca */}
-                  <td className="py-4 px-6">
-                    <p className="font-semibold text-slate-800">{comp.equipamentos?.nome}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{comp.marcas?.nome}</p>
-                  </td>
-
-                  {/* Secretaria / Local */}
-                  <td className="py-4 px-6">
-                    <p className="font-semibold text-slate-800">{comp.secretarias?.nome}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{comp.local}</p>
-                    {comp.usuario && (
-                      <p className="text-[10px] text-blue-600 font-medium mt-0.5">Usuário: {comp.usuario}</p>
-                    )}
-                  </td>
-
-                  {/* Status Badges */}
-                  <td className="py-4 px-6">
-                    <div className="flex flex-col gap-1 items-center justify-center">
-                      <span className={`
-                        inline-flex rounded-full px-2 py-0.5 text-3xs font-bold uppercase tracking-wider
-                        ${comp.ativo ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}
-                      `}>
-                        {comp.ativo ? 'Ativo' : 'Inativo'}
-                      </span>
-                      {comp.garantia_ativa && (
-                        <span className="inline-flex rounded bg-blue-50 text-blue-700 px-1.5 py-0.5 text-3xs font-bold uppercase tracking-wider">
-                          Garantia
+                    {/* ID / Legado */}
+                    <td className="py-4 px-6">
+                      <p className="font-bold text-slate-800">#{comp.id}</p>
+                      {comp.id_legado && (
+                        <span className="inline-flex rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-semibold text-slate-400 uppercase tracking-wider mt-1 border border-slate-100">
+                          Legado: {comp.id_legado}
                         </span>
                       )}
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* Actions */}
-                  <td className="py-4 px-6 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => openEditModal(comp)}
-                        className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                        title="Editar Computador"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(comp.id)}
-                        disabled={!isAdmin}
-                        className={`
-                          rounded-lg p-1.5 transition-colors
-                          ${isAdmin
-                            ? 'text-rose-600 hover:bg-rose-50 hover:text-rose-700'
-                            : 'text-slate-300 cursor-not-allowed'}
-                        `}
-                        title={isAdmin ? 'Excluir Computador' : 'Apenas administradores podem excluir'}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+                    {/* Patrimonio */}
+                    <td className="py-4 px-6 font-semibold text-slate-700">
+                      {comp.patrimonio || <span className="text-slate-400 font-normal">---</span>}
+                    </td>
 
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    {/* Equipamento / Marca */}
+                    <td className="py-4 px-6">
+                      <p className="font-semibold text-slate-800">
+                        {comp.equipamentos?.nome || 'Desktop'}
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {comp.marcas?.nome || 'Não Especificado'}
+                      </p>
+                    </td>
+
+                    {/* Secretaria / Local */}
+                    <td className="py-4 px-6">
+                      <p className="font-semibold text-slate-800">{comp.secretarias?.nome}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{comp.local}</p>
+                      {comp.usuario && (
+                        <p className="text-[10px] text-blue-600 font-medium mt-0.5">Usuário: {comp.usuario}</p>
+                      )}
+                    </td>
+
+                    {/* Status Badges */}
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col gap-1 items-center justify-center">
+                        <span className={`
+                          inline-flex rounded-full px-2 py-0.5 text-3xs font-bold uppercase tracking-wider
+                          ${comp.ativo ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}
+                        `}>
+                          {comp.ativo ? 'Ativo' : 'Inativo'}
+                        </span>
+                        {comp.garantia_ativa && (
+                          <span className="inline-flex rounded bg-blue-50 text-blue-700 px-1.5 py-0.5 text-3xs font-bold uppercase tracking-wider">
+                            Garantia
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-4 px-6 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => openEditModal(comp)}
+                          className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                          title="Editar Computador"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(comp.id)}
+                          disabled={!isAdmin}
+                          className={`
+                            rounded-lg p-1.5 transition-colors
+                            ${isAdmin
+                              ? 'text-rose-600 hover:bg-rose-50 hover:text-rose-700'
+                              : 'text-slate-300 cursor-not-allowed'}
+                          `}
+                          title={isAdmin ? 'Excluir Computador' : 'Apenas administradores podem excluir'}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-slate-100 bg-slate-50/30">
+            <p className="text-2xs text-slate-500">
+              Mostrando <span className="font-semibold text-slate-700">{totalItems === 0 ? 0 : startIndex + 1}</span> a{' '}
+              <span className="font-semibold text-slate-700">{Math.min(startIndex + itemsPerPage, totalItems)}</span> de{' '}
+              <span className="font-semibold text-slate-700">{totalItems}</span> computadores
+            </p>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-2xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white transition-colors cursor-pointer disabled:cursor-not-allowed"
+                >
+                  Anterior
+                </button>
+
+                {Array.from({ length: totalPages }, (_, idx) => idx + 1)
+                  .filter(page => {
+                    return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
+                  })
+                  .map((page, idx, arr) => {
+                    const showEllipsis = idx > 0 && page - arr[idx - 1] > 1;
+                    return (
+                      <React.Fragment key={page}>
+                        {showEllipsis && <span className="px-2 text-2xs text-slate-400">...</span>}
+                        <button
+                          onClick={() => setCurrentPage(page)}
+                          className={`inline-flex items-center justify-center rounded-lg w-8 h-8 text-2xs font-semibold border transition-colors cursor-pointer ${
+                            currentPage === page
+                              ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-600/10'
+                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      </React.Fragment>
+                    );
+                  })}
+
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-2xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white transition-colors cursor-pointer disabled:cursor-not-allowed"
+                >
+                  Próximo
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

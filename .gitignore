@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# IDE and temporary migration files
+.gemini/
+migracao_computadores.sql
