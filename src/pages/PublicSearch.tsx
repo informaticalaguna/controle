@@ -19,6 +19,7 @@ interface OSResult {
   id: number;
   data_abertura: string;
   status: 'Em andamento' | 'Pronto para retirada' | 'Concluído' | 'Entregue';
+  solucao_encontrada: string | null;
 }
 
 export const PublicSearch: React.FC = () => {
@@ -88,7 +89,7 @@ export const PublicSearch: React.FC = () => {
         // Fetch all OS
         const { data: osData, error: osError } = await supabase
           .from('ordens_servico')
-          .select('id, data_abertura, status')
+          .select('id, data_abertura, status, solucao_encontrada')
           .eq('computador_id', foundComputer.id)
           .order('id', { ascending: false });
 
@@ -279,6 +280,13 @@ export const PublicSearch: React.FC = () => {
                             {os.status === 'Entregue' && '📦 Equipamento entregue ao setor correspondente.'}
                             {os.status === 'Concluído' && '✅ Serviço concluído com sucesso e equipamento devolvido.'}
                           </p>
+
+                          {os.solucao_encontrada && (
+                            <div className="text-xs text-emerald-400 mt-2 bg-emerald-950/20 border border-emerald-500/10 p-2.5 rounded-lg">
+                              <span className="font-bold block mb-0.5 text-emerald-300">Solução Resolvida:</span>
+                              {os.solucao_encontrada}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
