@@ -388,7 +388,10 @@ export const OrdensServico: React.FC = () => {
       (o.computadores?.id_legado?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (o.computadores?.secretarias?.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (o.computadores?.local?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (o.criado_por?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+      (o.criado_por?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      o.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      formatDate(o.data_abertura).includes(searchTerm) ||
+      (o.data_entrega ? formatDate(o.data_entrega) : '').includes(searchTerm);
 
     const statusMatch = selectedStatus === '' || o.status === selectedStatus;
 
@@ -442,7 +445,7 @@ export const OrdensServico: React.FC = () => {
           </span>
           <input
             type="text"
-            placeholder="Buscar por ID, Patrimônio, Setor, Secretaria..."
+            placeholder="Buscar por ID, Patrimônio, Setor, Data, Status..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-3 text-xs text-slate-800 placeholder-slate-400 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
@@ -457,6 +460,7 @@ export const OrdensServico: React.FC = () => {
         >
           <option value="">Todos os Status</option>
           <option value="Em andamento">Em andamento</option>
+          <option value="Aguardando peças">Aguardando peças</option>
           <option value="Pronto para retirada">Pronto para retirada</option>
           <option value="Entregue">Entregue</option>
           <option value="Concluído">Concluído</option>
