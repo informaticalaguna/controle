@@ -263,10 +263,10 @@ export const Wifi: React.FC = () => {
             placeholder="Buscar por Local, Rede, IP..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-9 pr-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+            className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
           />
         </div>
-        <div className="text-3xs text-slate-400 font-semibold uppercase tracking-wider">
+        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider shrink-0">
           Total: {networks.length} redes cadastradas
         </div>
       </div>
