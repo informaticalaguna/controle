@@ -258,7 +258,11 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Função para busca pública insensível a maiúsculas/minúsculas e a espaços
-CREATE OR REPLACE FUNCTION public.buscar_computador_publico(search_text TEXT)
+-- Remover a função antiga com assinatura de 1 parâmetro
+DROP FUNCTION IF EXISTS public.buscar_computador_publico(TEXT);
+
+-- Criar a nova função com assinatura de 2 parâmetros
+CREATE OR REPLACE FUNCTION public.buscar_computador_publico(search_text TEXT, search_type TEXT DEFAULT 'id')
 RETURNS TABLE (
   id INTEGER,
   id_legado TEXT,
@@ -292,11 +296,15 @@ BEGIN
   LEFT JOIN public.marcas m ON c.marca_id = m.id
   LEFT JOIN public.equipamentos eq ON c.equipamento_id = eq.id
   WHERE 
-    -- 1. Comparação direta por ID numérico (se o termo puro for numérico)
-    (search_text ~ '^\d+$' AND (c.id = search_text::INTEGER OR c.patrimonio = search_text::NUMERIC))
-    OR
-    -- 2. Comparação exata por id_legado ignorando espaços e maiúsculas/minúsculas
-    lower(replace(c.id_legado, ' ', '')) = clean_search;
+    CASE 
+      WHEN search_type = 'id' THEN
+        (search_text ~ '^\d+$' AND c.id = search_text::INTEGER)
+      WHEN search_type = 'patrimonio' THEN
+        (search_text ~ '^\d+$' AND c.patrimonio = search_text::NUMERIC)
+      WHEN search_type = 'id_legado' THEN
+        lower(replace(c.id_legado, ' ', '')) = clean_search
+      ELSE FALSE
+    END;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

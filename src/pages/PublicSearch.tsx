@@ -25,6 +25,7 @@ interface OSResult {
 export const PublicSearch: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchType, setSearchType] = useState<'id' | 'id_legado' | 'patrimonio'>('id');
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [computer, setComputer] = useState<ComputerResult | null>(null);
@@ -125,17 +126,37 @@ export const PublicSearch: React.FC = () => {
       return;
     }
 
-    // Se contiver letras, deve conter também pelo menos um número para busca por legado
+    // Validação dependendo do tipo de busca
     const hasLetters = /[a-zA-Z]/.test(term);
     const hasDigits = /\d/.test(term);
 
-    if (hasLetters && !hasDigits) {
-      setErrorMsg('Para buscar por código legado, insira a identificação completa com letras e números (Ex: ADM03).');
-      setComputer(null);
-      setOsList([]);
-      setSearched(false);
-      refreshCaptcha();
-      return;
+    if (searchType === 'id') {
+      if (!/^\d+$/.test(term)) {
+        setErrorMsg('Para buscar por ID Interno, insira apenas números.');
+        setComputer(null);
+        setOsList([]);
+        setSearched(false);
+        refreshCaptcha();
+        return;
+      }
+    } else if (searchType === 'patrimonio') {
+      if (!/^\d+$/.test(term)) {
+        setErrorMsg('Para buscar por Patrimônio, insira apenas números.');
+        setComputer(null);
+        setOsList([]);
+        setSearched(false);
+        refreshCaptcha();
+        return;
+      }
+    } else if (searchType === 'id_legado') {
+      if (hasLetters && !hasDigits) {
+        setErrorMsg('Para buscar por código legado, insira a identificação completa com letras e números (Ex: ADM03).');
+        setComputer(null);
+        setOsList([]);
+        setSearched(false);
+        refreshCaptcha();
+        return;
+      }
     }
 
     setLoading(true);
@@ -148,7 +169,8 @@ export const PublicSearch: React.FC = () => {
 
       // Call the DB RPC function
       const { data, error } = await supabase.rpc('buscar_computador_publico', {
-        search_text: term
+        search_text: term,
+        search_type: searchType
       });
 
       if (error) throw error;
@@ -271,7 +293,7 @@ export const PublicSearch: React.FC = () => {
           <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Acompanhe sua Ordem de Serviço
           </h2>
-           <p className="mt-2.5 text-base text-slate-400 max-w-lg mx-auto">
+          <p className="mt-2.5 text-base text-slate-400 max-w-lg mx-auto">
             Insira o código interno, patrimônio ou legado da máquina para ver o status em tempo real.
           </p>
         </div>
@@ -279,6 +301,49 @@ export const PublicSearch: React.FC = () => {
         {/* Search Input Box */}
         <div className="w-full max-w-xl bg-slate-950/40 border border-slate-800/60 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
           <form onSubmit={handleSearch} className="space-y-4">
+            {/* Seletor do Tipo de Busca */}
+            <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchType('id');
+                  setErrorMsg('');
+                }}
+                className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${searchType === 'id'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                  }`}
+              >
+                ID
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchType('id_legado');
+                  setErrorMsg('');
+                }}
+                className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${searchType === 'id_legado'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                  }`}
+              >
+                ID Legado
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchType('patrimonio');
+                  setErrorMsg('');
+                }}
+                className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${searchType === 'patrimonio'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                  }`}
+              >
+                Patrimônio
+              </button>
+            </div>
+
             <div className="relative">
               <label htmlFor="search-input" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                 Identificação do Equipamento
@@ -291,7 +356,13 @@ export const PublicSearch: React.FC = () => {
                   id="search-input"
                   type="text"
                   required
-                  placeholder="Ex: 1045, LEG892 ou 12093..."
+                  placeholder={
+                    searchType === 'id'
+                      ? "Ex: 1045..."
+                      : searchType === 'id_legado'
+                        ? "Ex: ADM052, EDU014..."
+                        : "Ex: Número da etiqueta de patrimônio"
+                  }
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="block w-full rounded-xl border border-slate-800 bg-slate-950/80 py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-blue-500 focus:outline-none"
@@ -322,7 +393,7 @@ export const PublicSearch: React.FC = () => {
                     <RotateCw size={16} />
                   </button>
                 </div>
-                
+
                 {/* Input for captcha */}
                 <input
                   id="captcha-input"
