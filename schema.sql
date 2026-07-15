@@ -297,3 +297,27 @@ BEGIN
     lower(replace(c.id_legado, ' ', '')) = clean_search;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 7. TABELA DE REDES WI-FI
+CREATE TABLE IF NOT EXISTS public.redes_wifi (
+    id SERIAL PRIMARY KEY,
+    local TEXT NOT NULL,
+    nome_rede TEXT NOT NULL,
+    roteador TEXT,
+    ip TEXT,
+    senha_wifi TEXT,
+    usuario TEXT,
+    senha_acesso TEXT,
+    mac_lan TEXT,
+    mac_wan TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Ativar RLS
+ALTER TABLE public.redes_wifi ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS
+CREATE POLICY "Qualquer logado lê redes_wifi" ON public.redes_wifi FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Qualquer logado insere redes_wifi" ON public.redes_wifi FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Qualquer logado atualiza redes_wifi" ON public.redes_wifi FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "Apenas Admin deleta redes_wifi" ON public.redes_wifi FOR DELETE USING (public.is_admin());

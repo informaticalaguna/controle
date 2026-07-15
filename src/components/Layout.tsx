@@ -10,7 +10,8 @@ import {
   X, 
   User as UserIcon,
   Search,
-  Users
+  Users,
+  Wifi
 } from 'lucide-react';
 
 export const Layout: React.FC = () => {
@@ -27,6 +28,8 @@ export const Layout: React.FC = () => {
   if (isAdmin) {
     menuItems.push({ name: 'Técnicos', path: '/tecnicos', icon: Users });
   }
+
+  menuItems.push({ name: 'Redes Wi-Fi', path: '/wifi', icon: Wifi });
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
