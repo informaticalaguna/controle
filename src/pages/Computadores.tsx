@@ -273,7 +273,10 @@ export const Computadores: React.FC = () => {
     const textMatch =
       c.id.toString().includes(searchTerm) ||
       (c.id_legado?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (c.patrimonio?.toString() || '').includes(searchTerm);
+      (c.patrimonio?.toString() || '').includes(searchTerm) ||
+      (c.local?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (c.secretarias?.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (c.usuario?.toLowerCase() || '').includes(searchTerm.toLowerCase());
 
     const secMatch = selectedSecretaria === '' || c.secretaria_id.toString() === selectedSecretaria;
 
@@ -322,13 +325,13 @@ export const Computadores: React.FC = () => {
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
 
         {/* Search */}
-        <div className="relative w-full md:w-80">
+        <div className="relative w-full md:w-[480px]">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
             <Search size={16} />
           </span>
           <input
             type="text"
-            placeholder="Buscar por ID, Legado ou Patrimônio..."
+            placeholder="Buscar por ID, Legado, Patrimônio, Secretaria, Local ou Usuário..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-3 text-xs text-slate-800 placeholder-slate-400 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
