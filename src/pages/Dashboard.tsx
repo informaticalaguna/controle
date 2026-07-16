@@ -127,7 +127,7 @@ export const Dashboard: React.FC = () => {
 
       const activeCompIds = new Set(activeOSList.map(os => os.computadores?.id).filter(Boolean));
 
-      const availableCompList: OSWithDetails[] = (compData || [])
+      const availableCompList: OSWithDetails[] = (compData as any[] || [])
         .filter(c => !activeCompIds.has(c.id))
         .map(c => ({
           id: -c.id, // negative ID to avoid conflicts with OS IDs
@@ -138,9 +138,9 @@ export const Dashboard: React.FC = () => {
             id: c.id,
             id_legado: c.id_legado,
             patrimonio: c.patrimonio,
-            marcas: c.marcas || null,
-            equipamentos: c.equipamentos || null,
-            secretarias: c.secretarias || null,
+            marcas: (Array.isArray(c.marcas) ? c.marcas[0] : c.marcas) || null,
+            equipamentos: (Array.isArray(c.equipamentos) ? c.equipamentos[0] : c.equipamentos) || null,
+            secretarias: (Array.isArray(c.secretarias) ? c.secretarias[0] : c.secretarias) || null,
             local: c.local || null,
             ativo: c.ativo,
             disponivel: c.disponivel
