@@ -286,17 +286,32 @@ export const Computadores: React.FC = () => {
   };
 
   const filteredComputers = computers.filter(c => {
-    const textMatch =
-      c.id.toString().includes(searchTerm) ||
-      (c.id_legado?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (c.patrimonio?.toString() || '').includes(searchTerm) ||
-      (c.local?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (c.secretarias?.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (c.usuario?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-
     const secMatch = selectedSecretaria === '' || c.secretaria_id.toString() === selectedSecretaria;
+    if (!secMatch) return false;
 
-    return textMatch && secMatch;
+    const tokens = searchTerm.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return true;
+
+    return tokens.every(t => {
+      // Text matches
+      const textMatch =
+        c.id.toString().includes(t) ||
+        (c.id_legado?.toLowerCase() || '').includes(t) ||
+        (c.patrimonio?.toString() || '').includes(t) ||
+        (c.local?.toLowerCase() || '').includes(t) ||
+        (c.secretarias?.nome?.toLowerCase() || '').includes(t) ||
+        (c.usuario?.toLowerCase() || '').includes(t);
+
+      if (textMatch) return true;
+
+      // Status matches
+      if ('ativo'.startsWith(t) && !t.startsWith('in') && c.ativo === true) return true;
+      if ('inativo'.startsWith(t) && c.ativo === false) return true;
+      if (('disponível'.startsWith(t) || 'disponivel'.startsWith(t)) && !t.startsWith('in') && c.disponivel === true) return true;
+      if (('indisponível'.startsWith(t) || 'indisponivel'.startsWith(t)) && c.disponivel === false) return true;
+
+      return false;
+    });
   });
 
   const itemsPerPage = 50;
@@ -347,7 +362,7 @@ export const Computadores: React.FC = () => {
           </span>
           <input
             type="text"
-            placeholder="Buscar por ID, Legado, Patrimônio, Secretaria, Local ou Usuário..."
+            placeholder="Buscar por ID, Legado, Patr., Secr., Local, Usuário ou Status..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-3 text-xs text-slate-800 placeholder-slate-400 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
@@ -443,8 +458,13 @@ export const Computadores: React.FC = () => {
                         `}>
                           {comp.ativo ? 'Ativo' : 'Inativo'}
                         </span>
+                        {comp.disponivel && (
+                          <span className="inline-flex rounded-full bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 text-3xs font-bold uppercase tracking-wider">
+                            Disponível
+                          </span>
+                        )}
                         {comp.garantia_ativa && (
-                          <span className="inline-flex rounded bg-blue-50 text-blue-700 px-1.5 py-0.5 text-3xs font-bold uppercase tracking-wider">
+                          <span className="inline-flex rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 text-3xs font-bold uppercase tracking-wider">
                             Garantia
                           </span>
                         )}

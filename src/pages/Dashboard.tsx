@@ -14,6 +14,7 @@ interface OSWithDetails {
   data_abertura: string;
   status: 'Em andamento' | 'Aguardando peças' | 'Pronto para retirada' | 'Concluído' | 'Entregue' | 'Disponível';
   defeitos: { nome: string } | null;
+  computador_inativo?: boolean;
   computadores: {
     id: number;
     id_legado: string | null;
@@ -78,6 +79,7 @@ export const Dashboard: React.FC = () => {
           id,
           data_abertura,
           status,
+          computador_inativo,
           defeitos(nome),
           computadores(
             id,
@@ -125,10 +127,7 @@ export const Dashboard: React.FC = () => {
 
       if (compErr) throw compErr;
 
-      const activeCompIds = new Set(activeOSList.map(os => os.computadores?.id).filter(Boolean));
-
       const availableCompList: OSWithDetails[] = (compData as any[] || [])
-        .filter(c => !activeCompIds.has(c.id))
         .map(c => ({
           id: -c.id, // negative ID to avoid conflicts with OS IDs
           data_abertura: c.data_cadastro || '',
@@ -284,12 +283,13 @@ export const Dashboard: React.FC = () => {
                   </div>
                   <span className={`
                     shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border
-                    ${os.status === 'Pronto para retirada' ? 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse' : 
+                    ${os.computador_inativo ? 'bg-red-100 text-red-800 border-red-200' :
+                      os.status === 'Pronto para retirada' ? 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse' : 
                       os.status === 'Aguardando peças' ? 'bg-red-100 text-red-800 border-red-200' : 
                       os.status === 'Disponível' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
                       'bg-blue-100 text-blue-800 border-blue-200'}
                   `}>
-                    {os.status}
+                    {os.computador_inativo ? 'Cancelada (Inativo)' : os.status}
                   </span>
                 </div>
               ))
@@ -339,9 +339,11 @@ export const Dashboard: React.FC = () => {
                   </div>
                   <span className={`
                     shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border
-                    ${os.status === 'Concluído' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-800 border-slate-200'}
+                    ${os.computador_inativo ? 'bg-red-100 text-red-800 border-red-200' :
+                      os.status === 'Concluído' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 
+                      'bg-slate-100 text-slate-800 border-slate-200'}
                   `}>
-                    {os.status}
+                    {os.computador_inativo ? 'Cancelada (Inativo)' : os.status}
                   </span>
                 </div>
               ))

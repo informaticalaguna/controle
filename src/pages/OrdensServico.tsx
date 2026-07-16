@@ -34,6 +34,7 @@ interface OS {
   data_entrega: string | null;
   observacao: string | null;
   criado_por: string | null;
+  computador_inativo?: boolean;
   computadores?: {
     id: number;
     id_legado: string | null;
@@ -93,6 +94,7 @@ export const OrdensServico: React.FC = () => {
   const [dataEntrega, setDataEntrega] = useState('');
   const [observacao, setObservacao] = useState('');
   const [criadoPor, setCriadoPor] = useState('');
+  const [computadorInativo, setComputadorInativo] = useState(false);
 
   // Autocomplete search for Computer
   const [compSearch, setCompSearch] = useState('');
@@ -217,6 +219,7 @@ export const OrdensServico: React.FC = () => {
     setDataEntrega('');
     setObservacao('');
     setCriadoPor(profile?.nome_completo || '');
+    setComputadorInativo(false);
     
     setCompSearch('');
     setSelectedComp(null);
@@ -241,6 +244,7 @@ export const OrdensServico: React.FC = () => {
     setDataEntrega(os.data_entrega || '');
     setObservacao(os.observacao || '');
     setCriadoPor(os.criado_por || '');
+    setComputadorInativo(os.computador_inativo || false);
     
     if (os.computadores) {
       setSelectedComp({
@@ -270,7 +274,7 @@ export const OrdensServico: React.FC = () => {
       return;
     }
 
-    if (!selectedComp.ativo) {
+    if (!selectedComp.ativo && !computadorInativo) {
       setErrorMsg('Não é permitido abrir ou editar Ordens de Serviço para computadores inativos.');
       setSubmitting(false);
       return;
@@ -293,10 +297,21 @@ export const OrdensServico: React.FC = () => {
       entregue,
       entregue_para: entreguePara.trim().toUpperCase() || null,
       data_entrega: dataEntrega || null,
-      observacao: observacao.trim().toUpperCase() || null
+      observacao: observacao.trim().toUpperCase() || null,
+      computador_inativo: computadorInativo
     };
 
     try {
+      if (computadorInativo) {
+        // Mark computer as inactive in the database
+        const { error: compUpdateErr } = await supabase
+          .from('computadores')
+          .update({ ativo: false })
+          .eq('id', selectedComp.id);
+
+        if (compUpdateErr) throw compUpdateErr;
+      }
+
       if (isEditing && editingId) {
         const { error } = await supabase
           .from('ordens_servico')
@@ -585,13 +600,20 @@ export const OrdensServico: React.FC = () => {
 
                     {/* Status */}
                     <td className="py-4 px-6">
-                      <span className={`
-                        inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9px] font-bold border uppercase tracking-wider
-                        ${getStatusBadge(os.status)}
-                      `}>
-                        {getStatusIcon(os.status)}
-                        {os.status}
-                      </span>
+                      {os.computador_inativo ? (
+                        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9px] font-bold border uppercase tracking-wider bg-rose-50 text-rose-700 border-rose-200">
+                          <X size={12} />
+                          Cancelada (Comp. Inativo)
+                        </span>
+                      ) : (
+                        <span className={`
+                          inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9px] font-bold border uppercase tracking-wider
+                          ${getStatusBadge(os.status)}
+                        `}>
+                          {getStatusIcon(os.status)}
+                          {os.status}
+                        </span>
+                      )}
                     </td>
 
                     {/* Técnico */}
@@ -945,6 +967,28 @@ export const OrdensServico: React.FC = () => {
                     <div>
                       <span className="block text-xs font-bold text-slate-800">Entregue / Retirado</span>
                       <span className="block text-3xs text-slate-400 mt-0.5">Define o status como "Entregue". Requer reparo concluído.</span>
+                    </div>
+                  </label>
+
+                  {/* Computador Inativo Checkbox */}
+                  <label className="sm:col-span-2 relative flex items-start gap-2.5 cursor-pointer rounded-lg bg-white p-3 border border-slate-100 hover:bg-slate-50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={computadorInativo}
+                      onChange={(e) => {
+                        setComputadorInativo(e.target.checked);
+                        if (e.target.checked) {
+                          setReparoConcluido(false);
+                          setEntregue(false);
+                          setDataEntrega('');
+                          setEntreguePara('');
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 mt-0.5"
+                    />
+                    <div>
+                      <span className="block text-xs font-bold text-slate-800">Computador Inativo (Cancelar OS)</span>
+                      <span className="block text-3xs text-slate-400 mt-0.5">Assinala que o computador está inativo e encerra a OS. O computador será desativado no inventário.</span>
                     </div>
                   </label>
                 </div>
