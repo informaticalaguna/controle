@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -24,6 +25,7 @@ interface Computer {
   equipamento_id: number;
   ativo: boolean;
   garantia_ativa: boolean;
+  disponivel: boolean;
   usuario: string | null;
   observacao: string | null;
   secretarias?: { nome: string };
@@ -38,6 +40,7 @@ interface LookupTable {
 
 export const Computadores: React.FC = () => {
   const { isAdmin } = useAuth();
+  const location = useLocation();
 
   // Data States
   const [computers, setComputers] = useState<Computer[]>([]);
@@ -67,6 +70,7 @@ export const Computadores: React.FC = () => {
   const [equipamentoId, setEquipamentoId] = useState<number | ''>('');
   const [ativo, setAtivo] = useState(true);
   const [garantiaAtiva, setGarantiaAtiva] = useState(false);
+  const [disponivel, setDisponivel] = useState(false);
   const [usuario, setUsuario] = useState('');
   const [observacao, setObservacao] = useState('');
 
@@ -114,6 +118,15 @@ export const Computadores: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (location.state?.editCompId && computers.length > 0) {
+      const comp = computers.find(c => c.id === location.state.editCompId);
+      if (comp) {
+        openEditModal(comp);
+      }
+    }
+  }, [location.state, computers]);
+
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedSecretaria]);
 
@@ -150,6 +163,7 @@ export const Computadores: React.FC = () => {
     setEquipamentoId(equipamentos[0]?.id || '');
     setAtivo(true);
     setGarantiaAtiva(false);
+    setDisponivel(false);
     setUsuario('');
     setObservacao('');
     setErrorMsg('');
@@ -169,6 +183,7 @@ export const Computadores: React.FC = () => {
     setEquipamentoId(comp.equipamento_id);
     setAtivo(comp.ativo);
     setGarantiaAtiva(comp.garantia_ativa);
+    setDisponivel(comp.disponivel || false);
     setUsuario(comp.usuario || '');
     setObservacao(comp.observacao || '');
     setErrorMsg('');
@@ -214,6 +229,7 @@ export const Computadores: React.FC = () => {
       equipamento_id: Number(equipamentoId),
       ativo,
       garantia_ativa: garantiaAtiva,
+      disponivel,
       usuario: usuario.trim().toUpperCase() || null,
       observacao: observacao.trim().toUpperCase() || null
     };
@@ -665,6 +681,16 @@ export const Computadores: React.FC = () => {
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
                     />
                     <span className="text-xs font-semibold text-slate-700">Garantia Ativa</span>
+                  </label>
+
+                  <label className="relative flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={disponivel}
+                      onChange={(e) => setDisponivel(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                    />
+                    <span className="text-xs font-semibold text-slate-700">Disponível</span>
                   </label>
                 </div>
 

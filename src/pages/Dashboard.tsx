@@ -12,7 +12,7 @@ import {
 interface OSWithDetails {
   id: number;
   data_abertura: string;
-  status: 'Em andamento' | 'Aguardando peças' | 'Pronto para retirada' | 'Concluído' | 'Entregue';
+  status: 'Em andamento' | 'Aguardando peças' | 'Pronto para retirada' | 'Concluído' | 'Entregue' | 'Disponível';
   defeitos: { nome: string } | null;
   computadores: {
     id: number;
@@ -22,6 +22,8 @@ interface OSWithDetails {
     equipamentos: { nome: string } | null;
     secretarias: { nome: string } | null;
     local: string | null;
+    ativo: boolean;
+    disponivel: boolean;
   } | null;
 }
 
@@ -84,7 +86,9 @@ export const Dashboard: React.FC = () => {
             marcas(nome),
             equipamentos(nome),
             secretarias(nome),
-            local
+            local,
+            ativo,
+            disponivel
           )
         `)
         .order('id', { ascending: false });
@@ -94,7 +98,56 @@ export const Dashboard: React.FC = () => {
       const allOS = (data || []) as unknown as OSWithDetails[];
       
       // Coluna A: Sala de TI (Em andamento, Aguardando peças, Pronto para retirada)
-      setSalaTIList(allOS.filter(os => os.status === 'Em andamento' || os.status === 'Aguardando peças' || os.status === 'Pronto para retirada'));
+      // Apenas computadores ativos
+      const activeOSList = allOS.filter(os => {
+        const isActiveStatus = os.status === 'Em andamento' || os.status === 'Aguardando peças' || os.status === 'Pronto para retirada';
+        const isCompActive = os.computadores?.ativo !== false;
+        return isActiveStatus && isCompActive;
+      });
+
+      // 3. Fetch Available and Active Computers
+      const { data: compData, error: compErr } = await supabase
+        .from('computadores')
+        .select(`
+          id,
+          id_legado,
+          patrimonio,
+          data_cadastro,
+          local,
+          ativo,
+          disponivel,
+          marcas(nome),
+          equipamentos(nome),
+          secretarias(nome)
+        `)
+        .eq('disponivel', true)
+        .eq('ativo', true);
+
+      if (compErr) throw compErr;
+
+      const activeCompIds = new Set(activeOSList.map(os => os.computadores?.id).filter(Boolean));
+
+      const availableCompList: OSWithDetails[] = (compData || [])
+        .filter(c => !activeCompIds.has(c.id))
+        .map(c => ({
+          id: -c.id, // negative ID to avoid conflicts with OS IDs
+          data_abertura: c.data_cadastro || '',
+          status: 'Disponível',
+          defeitos: null,
+          computadores: {
+            id: c.id,
+            id_legado: c.id_legado,
+            patrimonio: c.patrimonio,
+            marcas: c.marcas || null,
+            equipamentos: c.equipamentos || null,
+            secretarias: c.secretarias || null,
+            local: c.local || null,
+            ativo: c.ativo,
+            disponivel: c.disponivel
+          }
+        }));
+
+      setSalaTIList([...activeOSList, ...availableCompList]);
       
       // Coluna B: Entregues (Entregue, Concluído) - Mostrando apenas as últimas 10 no feed
       const completedAndEntregues = allOS.filter(os => os.status === 'Entregue' || os.status === 'Concluído');
@@ -113,7 +166,11 @@ export const Dashboard: React.FC = () => {
   }, []);
 
   const handleCardClick = (osId: number) => {
-    navigate('/ordens', { state: { editOSId: osId } });
+    if (osId < 0) {
+      navigate('/computadores', { state: { editCompId: -osId } });
+    } else {
+      navigate('/ordens', { state: { editOSId: osId } });
+    }
   };
 
   if (loading) {
@@ -229,6 +286,7 @@ export const Dashboard: React.FC = () => {
                     shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border
                     ${os.status === 'Pronto para retirada' ? 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse' : 
                       os.status === 'Aguardando peças' ? 'bg-red-100 text-red-800 border-red-200' : 
+                      os.status === 'Disponível' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
                       'bg-blue-100 text-blue-800 border-blue-200'}
                   `}>
                     {os.status}

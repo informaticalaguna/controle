@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS public.computadores (
     equipamento_id INTEGER REFERENCES public.equipamentos(id),
     ativo BOOLEAN DEFAULT TRUE NOT NULL,
     garantia_ativa BOOLEAN DEFAULT FALSE NOT NULL,
+    disponivel BOOLEAN DEFAULT FALSE NOT NULL,
     usuario TEXT,
     observacao TEXT
 );
