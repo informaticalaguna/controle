@@ -285,15 +285,15 @@ export const PublicSearch: React.FC = () => {
       </header>
 
       {/* Main Container */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-16">
-        <div className="w-full max-w-2xl text-center mb-8">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <div className="w-full max-w-2xl text-center mb-6">
           <span className="inline-flex items-center rounded-full bg-blue-500/15 px-3 py-1 text-xs font-semibold text-blue-400 border border-blue-500/20 mb-3">
             Consulta Pública Externa
           </span>
           <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Acompanhe sua Ordem de Serviço
           </h2>
-          <p className="mt-2.5 text-base text-slate-400 max-w-lg mx-auto">
+          <p className="mt-2 text-sm text-slate-400 max-w-lg mx-auto">
             Insira o código interno, patrimônio ou legado da máquina para ver o status em tempo real.
           </p>
         </div>
@@ -358,7 +358,7 @@ export const PublicSearch: React.FC = () => {
                   required
                   placeholder={
                     searchType === 'id'
-                      ? "Ex: 1045..."
+                      ? "Ex: 106"
                       : searchType === 'id_legado'
                         ? "Ex: ADM052, EDU014..."
                         : "Ex: Número da etiqueta de patrimônio"
@@ -538,8 +538,8 @@ export const PublicSearch: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-800/80 bg-slate-950/40 py-6 text-center text-xs text-slate-500">
-        <p>&copy; {new Date().getFullYear()} Prefeitura Municipal de Laguna - Departamento de Informática - SEFAZ</p>
+      <footer className="relative z-10 border-t border-slate-800/80 bg-slate-950/40 py-4 text-center text-xs text-slate-500">
+        <p>&copy; {new Date().getFullYear()} Desenvolvido por: Departamento de Informática - Prefeitura Municipal de Laguna - SEFAZ</p>
       </footer>
     </div>
   );
