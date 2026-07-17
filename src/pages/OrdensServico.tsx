@@ -62,6 +62,18 @@ interface ComputerSearchRow {
   ativo: boolean;
 }
 
+const STANDARD_DEFEITOS = [
+  'NÃO LIGA',
+  'NÃO DA VÍDEO',
+  'TRAVAMENTOS',
+  'VÍRUS',
+  'LENTIDÃO',
+  'BARULHO',
+  'TELA AZUL',
+  'NÃO CONECTA INTERNET',
+  'NÃO ENCONTRADO DEFEITO'
+];
+
 export const OrdensServico: React.FC = () => {
   const { isAdmin, profile } = useAuth();
   const location = useLocation();
@@ -84,6 +96,7 @@ export const OrdensServico: React.FC = () => {
   // Form States
   const [editingId, setEditingId] = useState<number | null>(null);
   const [defeitoId, setDefeitoId] = useState<number | ''>('');
+  const [outroDefeitoText, setOutroDefeitoText] = useState('');
   const [solucaoEncontrada, setSolucaoEncontrada] = useState('');
   const [formatado, setFormatado] = useState(false);
   const [backupRealizado, setBackupRealizado] = useState(false);
@@ -209,6 +222,7 @@ export const OrdensServico: React.FC = () => {
     setIsEditing(false);
     setEditingId(null);
     setDefeitoId('');
+    setOutroDefeitoText('');
     setSolucaoEncontrada('');
     setFormatado(false);
     setBackupRealizado(false);
@@ -233,7 +247,25 @@ export const OrdensServico: React.FC = () => {
   const openEditModal = (os: OS) => {
     setIsEditing(true);
     setEditingId(os.id);
-    setDefeitoId(os.defeito_id);
+    
+    // Check if the defect is standard or custom
+    const defectName = os.defeitos?.nome || '';
+    const isStandard = STANDARD_DEFEITOS.includes(defectName.toUpperCase());
+    
+    if (isStandard) {
+      setDefeitoId(os.defeito_id);
+      setOutroDefeitoText('');
+    } else {
+      const outrosObj = defeitos.find(d => d.nome.toUpperCase() === 'OUTROS');
+      if (outrosObj) {
+        setDefeitoId(outrosObj.id);
+        setOutroDefeitoText(defectName.toUpperCase() === 'OUTROS' ? '' : defectName);
+      } else {
+        setDefeitoId(os.defeito_id);
+        setOutroDefeitoText('');
+      }
+    }
+
     setSolucaoEncontrada(os.solucao_encontrada || '');
     setFormatado(os.formatado);
     setBackupRealizado(os.backup_realizado);
@@ -286,9 +318,54 @@ export const OrdensServico: React.FC = () => {
       return;
     }
 
+    let finalDefeitoId = Number(defeitoId);
+    const outrosObj = defeitos.find(d => d.nome.toUpperCase() === 'OUTROS');
+    
+    if (outrosObj && Number(defeitoId) === outrosObj.id) {
+      const customText = outroDefeitoText.trim().toUpperCase();
+      if (!customText) {
+        setErrorMsg('Por favor, especifique o defeito apresentado.');
+        setSubmitting(false);
+        return;
+      }
+
+      // Check if it already exists locally
+      const existing = defeitos.find(d => d.nome.toUpperCase() === customText);
+      if (existing) {
+        finalDefeitoId = existing.id;
+      } else {
+        try {
+          const { data: newDefData, error: newDefErr } = await supabase
+            .from('defeitos')
+            .insert({ nome: customText })
+            .select('id')
+            .single();
+
+          if (newDefErr) {
+            // Concurrency fallback
+            const { data: fetchDefData, error: fetchDefErr } = await supabase
+              .from('defeitos')
+              .select('id')
+              .eq('nome', customText)
+              .single();
+
+            if (fetchDefErr) throw newDefErr;
+            finalDefeitoId = fetchDefData.id;
+          } else if (newDefData) {
+            finalDefeitoId = newDefData.id;
+          }
+        } catch (err: any) {
+          console.error(err);
+          setErrorMsg('Erro ao salvar o defeito especificado no banco de dados.');
+          setSubmitting(false);
+          return;
+        }
+      }
+    }
+
     const payload = {
       computador_id: selectedComp.id,
-      defeito_id: Number(defeitoId),
+      defeito_id: finalDefeitoId,
       solucao_encontrada: solucaoEncontrada.trim().toUpperCase() || null,
       formatado,
       backup_realizado: backupRealizado,
@@ -847,20 +924,44 @@ export const OrdensServico: React.FC = () => {
               </div>
 
               {/* Defeito Apresentado */}
-              <div>
-                <label htmlFor="defeito" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Defeito Apresentado *</label>
-                <select
-                  id="defeito"
-                  required
-                  value={defeitoId}
-                  onChange={(e) => setDefeitoId(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
-                >
-                  <option value="" disabled>Selecione o defeito...</option>
-                  {defeitos.map(def => (
-                    <option key={def.id} value={def.id}>{def.nome}</option>
-                  ))}
-                </select>
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="defeito" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Defeito Apresentado *</label>
+                  <select
+                    id="defeito"
+                    required
+                    value={defeitoId}
+                    onChange={(e) => setDefeitoId(e.target.value === '' ? '' : Number(e.target.value))}
+                    className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                  >
+                    <option value="" disabled>Selecione o defeito...</option>
+                    {defeitos.map(def => (
+                      <option key={def.id} value={def.id}>{def.nome}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {(() => {
+                  const outrosObj = defeitos.find(d => d.nome.toUpperCase() === 'OUTROS');
+                  const isOutros = outrosObj && Number(defeitoId) === outrosObj.id;
+                  if (isOutros) {
+                    return (
+                      <div className="animate-fade-in">
+                        <label htmlFor="outroDefeitoText" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Especifique o Defeito Apresentado *</label>
+                        <input
+                          id="outroDefeitoText"
+                          type="text"
+                          required
+                          placeholder="Descreva o defeito detalhadamente..."
+                          value={outroDefeitoText}
+                          onChange={(e) => setOutroDefeitoText(e.target.value)}
+                          className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                        />
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
               {/* Solução Encontrada */}
