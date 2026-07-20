@@ -324,6 +324,7 @@ export const OrdensServico: React.FC = () => {
     }
 
     let finalDefeitoId = Number(defeitoId);
+    let finalObservacao = observacao.trim().toUpperCase() || null;
     const outrosObj = defeitos.find(d => d.nome.toUpperCase() === 'OUTROS');
     
     if (outrosObj && Number(defeitoId) === outrosObj.id) {
@@ -340,30 +341,46 @@ export const OrdensServico: React.FC = () => {
         finalDefeitoId = existing.id;
       } else {
         try {
-          const { data: newDefData, error: newDefErr } = await supabase
+          // Check database first
+          const { data: dbDef } = await supabase
             .from('defeitos')
-            .insert({ nome: customText })
             .select('id')
-            .single();
+            .ilike('nome', customText)
+            .maybeSingle();
 
-          if (newDefErr) {
-            // Concurrency fallback
-            const { data: fetchDefData, error: fetchDefErr } = await supabase
+          if (dbDef?.id) {
+            finalDefeitoId = dbDef.id;
+          } else {
+            // Attempt to insert into defeitos table
+            const { data: newDefData, error: newDefErr } = await supabase
               .from('defeitos')
+              .insert({ nome: customText })
               .select('id')
-              .eq('nome', customText)
-              .single();
+              .maybeSingle();
 
-            if (fetchDefErr) throw newDefErr;
-            finalDefeitoId = fetchDefData.id;
-          } else if (newDefData) {
-            finalDefeitoId = newDefData.id;
+            if (!newDefErr && newDefData?.id) {
+              finalDefeitoId = newDefData.id;
+            } else {
+              // Fallback if RLS blocks inserting new defect entries for non-admin users:
+              // Use OUTROS defect ID and store the specified defect text in observacao
+              finalDefeitoId = outrosObj.id;
+              const especNote = `DEFEITO ESPECIFICADO: ${customText}`;
+              if (!finalObservacao) {
+                finalObservacao = especNote;
+              } else if (!finalObservacao.includes(customText)) {
+                finalObservacao = `${especNote} | ${finalObservacao}`;
+              }
+            }
           }
         } catch (err: any) {
-          console.error(err);
-          setErrorMsg('Erro ao salvar o defeito especificado no banco de dados.');
-          setSubmitting(false);
-          return;
+          console.warn('Fallback para ID de OUTROS devido a restrição de permissão no cadastro de defeitos:', err);
+          finalDefeitoId = outrosObj.id;
+          const especNote = `DEFEITO ESPECIFICADO: ${customText}`;
+          if (!finalObservacao) {
+            finalObservacao = especNote;
+          } else if (!finalObservacao.includes(customText)) {
+            finalObservacao = `${especNote} | ${finalObservacao}`;
+          }
         }
       }
     }
@@ -379,7 +396,7 @@ export const OrdensServico: React.FC = () => {
       entregue,
       entregue_para: entreguePara.trim().toUpperCase() || null,
       data_entrega: dataEntrega || null,
-      observacao: observacao.trim().toUpperCase() || null,
+      observacao: finalObservacao,
       computador_inativo: computadorInativo
     };
 
