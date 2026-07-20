@@ -15,7 +15,8 @@ import {
   Package, 
   AlertTriangle,
   Info,
-  Loader2
+  Loader2,
+  ExternalLink
 } from 'lucide-react';
 
 interface OS {
@@ -39,6 +40,7 @@ interface OS {
     id: number;
     id_legado: string | null;
     patrimonio: number | null;
+    usuario?: string | null;
     ativo?: boolean;
     local?: string | null;
     secretarias?: { nome: string };
@@ -57,6 +59,7 @@ interface ComputerSearchRow {
   id: number;
   id_legado: string | null;
   patrimonio: number | null;
+  usuario?: string | null;
   secretarias: { nome: string } | null;
   marcas: { nome: string } | null;
   ativo: boolean;
@@ -132,6 +135,7 @@ export const OrdensServico: React.FC = () => {
             id,
             id_legado,
             patrimonio,
+            usuario,
             ativo,
             local,
             secretarias(nome),
@@ -191,7 +195,7 @@ export const OrdensServico: React.FC = () => {
         
         let query = supabase
           .from('computadores')
-          .select('id, id_legado, patrimonio, secretarias(nome), marcas(nome), ativo');
+          .select('id, id_legado, patrimonio, usuario, secretarias(nome), marcas(nome), ativo');
 
         if (isNum) {
           const num = parseInt(term, 10);
@@ -283,6 +287,7 @@ export const OrdensServico: React.FC = () => {
         id: os.computadores.id,
         id_legado: os.computadores.id_legado,
         patrimonio: os.computadores.patrimonio,
+        usuario: os.computadores.usuario || null,
         ativo: os.computadores.ativo ?? true,
         secretarias: os.computadores.secretarias || null,
         marcas: os.computadores.marcas || null
@@ -849,9 +854,23 @@ export const OrdensServico: React.FC = () => {
                       </p>
                       <p className="text-slate-500 text-3xs mt-0.5">
                         Secretaria: {selectedComp?.secretarias?.nome || 'N/A'} | ID Interno: #{selectedComp?.id}
+                        {selectedComp?.usuario && ` | Usuário: ${selectedComp.usuario}`}
                       </p>
                     </div>
-                    <span className="text-2xs text-slate-400 font-semibold italic">Máquina Vinculada</span>
+                    <div className="flex items-center gap-2">
+                      {selectedComp?.id && (
+                        <button
+                          type="button"
+                          onClick={() => navigate('/computadores', { state: { editCompId: selectedComp.id, returnToOSId: editingId } })}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-2xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80 transition-colors"
+                          title="Abrir Cadastro do Computador"
+                        >
+                          <ExternalLink size={12} />
+                          <span>Abrir Cadastro</span>
+                        </button>
+                      )}
+                      <span className="text-2xs text-slate-400 font-semibold italic">Máquina Vinculada</span>
+                    </div>
                   </div>
                 ) : selectedComp ? (
                   <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3 flex justify-between items-center text-xs">
@@ -862,15 +881,27 @@ export const OrdensServico: React.FC = () => {
                       </p>
                       <p className="text-blue-700 text-3xs mt-0.5">
                         Secretaria: {selectedComp.secretarias?.nome || 'N/A'} | ID Interno: #{selectedComp.id}
+                        {selectedComp.usuario && ` | Usuário: ${selectedComp.usuario}`}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedComp(null)}
-                      className="rounded-lg p-1 text-blue-600 hover:bg-blue-100"
-                    >
-                      Alterar
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/computadores', { state: { editCompId: selectedComp.id, returnToOS: true } })}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-2xs font-semibold text-blue-700 hover:text-blue-800 bg-blue-100 hover:bg-blue-200/80 border border-blue-200 transition-colors"
+                        title="Abrir Cadastro do Computador"
+                      >
+                        <ExternalLink size={12} />
+                        <span>Abrir Cadastro</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedComp(null)}
+                        className="rounded-lg p-1 text-blue-600 hover:bg-blue-100"
+                      >
+                        Alterar
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="relative">
@@ -912,7 +943,10 @@ export const OrdensServico: React.FC = () => {
                                   </span>
                                 )}
                               </p>
-                              <p className="text-3xs text-slate-400 mt-0.5">Secretaria: {comp.secretarias?.nome || 'N/A'}</p>
+                              <p className="text-3xs text-slate-400 mt-0.5">
+                                Secretaria: {comp.secretarias?.nome || 'N/A'}
+                                {comp.usuario && ` | Usuário: ${comp.usuario}`}
+                              </p>
                             </div>
                             <span className="text-3xs text-slate-400">Interno: #{comp.id}</span>
                           </div>

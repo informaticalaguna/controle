@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -11,7 +11,8 @@ import {
   Monitor,
   ShieldAlert,
   SlidersHorizontal,
-  Loader2
+  Loader2,
+  ArrowLeft
 } from 'lucide-react';
 
 interface Computer {
@@ -41,6 +42,7 @@ interface LookupTable {
 export const Computadores: React.FC = () => {
   const { isAdmin } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Data States
   const [computers, setComputers] = useState<Computer[]>([]);
@@ -55,6 +57,7 @@ export const Computadores: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSecretaria, setSelectedSecretaria] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [returnToOSId, setReturnToOSId] = useState<number | boolean | null>(null);
 
   // History States
   const [history, setHistory] = useState<any[]>([]);
@@ -121,10 +124,24 @@ export const Computadores: React.FC = () => {
     if (location.state?.editCompId && computers.length > 0) {
       const comp = computers.find(c => c.id === location.state.editCompId);
       if (comp) {
+        if (location.state.returnToOSId) {
+          setReturnToOSId(location.state.returnToOSId);
+        } else if (location.state.returnToOS) {
+          setReturnToOSId(true);
+        }
         openEditModal(comp);
+        navigate(location.pathname, { replace: true, state: {} });
       }
     }
-  }, [location.state, computers]);
+  }, [location.state, computers, navigate]);
+
+  const handleReturnToOS = () => {
+    if (typeof returnToOSId === 'number') {
+      navigate('/ordens', { state: { editOSId: returnToOSId } });
+    } else {
+      navigate('/ordens');
+    }
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -576,6 +593,26 @@ export const Computadores: React.FC = () => {
               </button>
             </div>
 
+            {/* Banner de Retorno para OS */}
+            {returnToOSId && (
+              <div className="mt-4 p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl flex items-center justify-between text-xs text-blue-900 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <ArrowLeft size={16} className="text-blue-600 shrink-0" />
+                  <span>
+                    Acesso via atalho da {typeof returnToOSId === 'number' ? <strong>Ordem de Serviço #{returnToOSId}</strong> : 'Ordem de Serviço'}.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleReturnToOS}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-2xs whitespace-nowrap cursor-pointer"
+                >
+                  <ArrowLeft size={12} />
+                  <span>Voltar para a OS</span>
+                </button>
+              </div>
+            )}
+
             <div className={`mt-4 ${isEditing ? 'grid grid-cols-1 md:grid-cols-2 gap-6 items-start' : ''}`}>
               <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -741,7 +778,18 @@ export const Computadores: React.FC = () => {
                 </div>
 
                 {/* Buttons */}
-                <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+                  {returnToOSId && (
+                    <button
+                      type="button"
+                      onClick={handleReturnToOS}
+                      className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/80 hover:bg-blue-100 px-3.5 py-2.5 text-xs font-semibold text-blue-700 transition-colors mr-auto cursor-pointer"
+                      title="Voltar para a Ordem de Serviço"
+                    >
+                      <ArrowLeft size={14} />
+                      Voltar para OS {typeof returnToOSId === 'number' ? `#${returnToOSId}` : ''}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
