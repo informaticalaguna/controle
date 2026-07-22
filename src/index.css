@@ -2,6 +2,8 @@
 
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-size-2xs: 0.625rem;
   --font-size-3xs: 0.55rem;
@@ -48,3 +50,103 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
+
+/* Dark Mode Overrides */
+.dark {
+  background-color: #020617;
+  color: #f8fafc;
+
+  /* Custom Scrollbar in Dark Mode */
+  ::-webkit-scrollbar-thumb {
+    background: #475569;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+
+  .bg-white {
+    background-color: #0f172a !important;
+    color: #f1f5f9;
+  }
+  
+  .bg-slate-50 {
+    background-color: #020617 !important;
+  }
+
+  .bg-slate-50\/50 {
+    background-color: rgba(15, 23, 42, 0.4) !important;
+  }
+
+  .border-slate-100,
+  .border-slate-200,
+  .border-slate-200\/60,
+  .border-slate-200\/80 {
+    border-color: #1e293b !important;
+  }
+
+  .text-slate-800 {
+    color: #e2e8f0 !important;
+  }
+
+  .text-slate-700 {
+    color: #cbd5e1 !important;
+  }
+
+  .text-slate-600 {
+    color: #94a3b8 !important;
+  }
+
+  .text-slate-500 {
+    color: #64748b !important;
+  }
+
+  /* Table styling */
+  .divide-slate-100 > * + * {
+    border-color: #1e293b !important;
+  }
+
+  .hover\:bg-slate-50\/50:hover {
+    background-color: rgba(30, 41, 59, 0.3) !important;
+  }
+
+  /* Inputs, Selects, Textareas */
+  input, select, textarea {
+    &.bg-slate-50, &.bg-slate-50\/50, &.bg-white, &.bg-slate-100 {
+      background-color: #020617 !important;
+      color: #f1f5f9 !important;
+      border-color: #1e293b !important;
+    }
+    
+    &:focus {
+      background-color: #020617 !important;
+      border-color: #3b82f6 !important;
+      color: #f1f5f9 !important;
+    }
+
+    &::placeholder {
+      color: #475569 !important;
+    }
+  }
+
+  /* Selection box option colors */
+  option {
+    background-color: #0f172a !important;
+    color: #f1f5f9 !important;
+  }
+
+  /* Quick links and tags */
+  .bg-slate-100 {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+  }
+
+  .hover\:bg-blue-50:hover {
+    background-color: #1e3a8a !important;
+    color: #60a5fa !important;
+  }
+
+  .hover\:bg-slate-50:hover {
+    background-color: #1e293b !important;
+  }
+}
+
