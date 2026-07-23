@@ -35,6 +35,8 @@ interface OS {
   data_entrega: string | null;
   observacao: string | null;
   criado_por: string | null;
+  solicitante?: string | null;
+  telefone_contato?: string | null;
   computador_inativo?: boolean;
   computadores?: {
     id: number;
@@ -111,6 +113,16 @@ export const OrdensServico: React.FC = () => {
   const [observacao, setObservacao] = useState('');
   const [criadoPor, setCriadoPor] = useState('');
   const [computadorInativo, setComputadorInativo] = useState(false);
+  const [solicitante, setSolicitante] = useState('');
+  const [telefoneContato, setTelefoneContato] = useState('');
+
+  const formatPhone = (value: string) => {
+    const clean = value.replace(/\D/g, '');
+    if (clean.length <= 2) return clean;
+    if (clean.length <= 6) return `(${clean.slice(0, 2)}) ${clean.slice(2)}`;
+    if (clean.length <= 10) return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
+    return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7, 11)}`;
+  };
 
   // Autocomplete search for Computer
   const [compSearch, setCompSearch] = useState('');
@@ -238,6 +250,8 @@ export const OrdensServico: React.FC = () => {
     setObservacao('');
     setCriadoPor(profile?.nome_completo || '');
     setComputadorInativo(false);
+    setSolicitante('');
+    setTelefoneContato('');
     
     setCompSearch('');
     setSelectedComp(null);
@@ -281,6 +295,8 @@ export const OrdensServico: React.FC = () => {
     setObservacao(os.observacao || '');
     setCriadoPor(os.criado_por || '');
     setComputadorInativo(os.computador_inativo || false);
+    setSolicitante(os.solicitante || '');
+    setTelefoneContato(os.telefone_contato || '');
     
     if (os.computadores) {
       setSelectedComp({
@@ -397,7 +413,9 @@ export const OrdensServico: React.FC = () => {
       entregue_para: entreguePara.trim().toUpperCase() || null,
       data_entrega: dataEntrega || null,
       observacao: finalObservacao,
-      computador_inativo: computadorInativo
+      computador_inativo: computadorInativo,
+      solicitante: solicitante.trim().toUpperCase() || null,
+      telefone_contato: telefoneContato.trim() || null
     };
 
     try {
@@ -506,6 +524,8 @@ export const OrdensServico: React.FC = () => {
       (o.computadores?.secretarias?.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (o.computadores?.local?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (o.criado_por?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (o.solicitante?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (o.telefone_contato || '').includes(searchTerm) ||
       o.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
       formatDate(o.data_abertura).includes(searchTerm);
 
@@ -683,6 +703,11 @@ export const OrdensServico: React.FC = () => {
                       <p className="text-[10px] text-slate-400/80">
                         Setor: {os.computadores?.secretarias?.nome}{os.computadores?.local ? ` - ${os.computadores.local}` : ''}
                       </p>
+                      {(os.solicitante || os.telefone_contato) && (
+                        <p className="text-[10px] text-blue-600/80 mt-0.5">
+                          Solicitante: {os.solicitante || '---'} {os.telefone_contato ? ` (${os.telefone_contato})` : ''}
+                        </p>
+                      )}
                     </td>
 
                     {/* Data Abertura */}
@@ -972,6 +997,36 @@ export const OrdensServico: React.FC = () => {
                     )}
                   </div>
                 )}
+              </div>
+
+              {/* Solicitante e Telefone de Contato */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="solicitante" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                    Nome do Solicitante
+                  </label>
+                  <input
+                    id="solicitante"
+                    type="text"
+                    placeholder="Nome de quem solicitou o serviço..."
+                    value={solicitante}
+                    onChange={(e) => setSolicitante(e.target.value)}
+                    className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="telefoneContato" className="block text-3xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                    Telefone de Contato
+                  </label>
+                  <input
+                    id="telefoneContato"
+                    type="text"
+                    placeholder="(99) 99999-9999"
+                    value={telefoneContato}
+                    onChange={(e) => setTelefoneContato(formatPhone(e.target.value))}
+                    className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
+                  />
+                </div>
               </div>
 
               {/* Defeito Apresentado */}

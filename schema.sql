@@ -86,7 +86,9 @@ CREATE TABLE IF NOT EXISTS public.ordens_servico (
     entregue_para TEXT,
     data_entrega DATE,
     observacao TEXT,
-    criado_por TEXT
+    criado_por TEXT,
+    solicitante TEXT,
+    telefone_contato TEXT
 );
 
 -- 5. FUNÇÕES E TRIGGERS
