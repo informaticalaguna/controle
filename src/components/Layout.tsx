@@ -11,7 +11,8 @@ import {
   User as UserIcon,
   Search,
   Users,
-  Wifi
+  Wifi,
+  Laptop
 } from 'lucide-react';
 
 export const Layout: React.FC = () => {
@@ -43,11 +44,17 @@ export const Layout: React.FC = () => {
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-slate-900 text-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0
+        relative overflow-hidden fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-slate-900 text-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
+        {/* Background Laptop Watermark Effect */}
+        <div className="pointer-events-none absolute -right-10 bottom-24 select-none text-blue-400 opacity-[0.07] rotate-[-10deg] transition-opacity duration-300">
+          <Laptop size={300} strokeWidth={1} />
+        </div>
+        <div className="pointer-events-none absolute -right-6 bottom-32 h-44 w-44 rounded-full bg-blue-500/5 blur-3xl" />
+
         {/* Sidebar Header */}
-        <div className="flex h-16 items-center justify-between border-b border-slate-800 px-6">
+        <div className="relative z-10 flex h-16 items-center justify-between border-b border-slate-800 px-6">
           <Link to="/" className="flex items-center gap-2.5 font-bold text-sm text-white">
             <img 
               src="/logo.svg" 
@@ -65,7 +72,7 @@ export const Layout: React.FC = () => {
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 space-y-1 px-4 py-6">
+        <nav className="relative z-10 flex-1 space-y-1 px-4 py-6">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -89,7 +96,7 @@ export const Layout: React.FC = () => {
         </nav>
 
         {/* User Profile Summary */}
-        <div className="border-t border-slate-800 p-4">
+        <div className="relative z-10 border-t border-slate-800 p-4">
           <div className="flex items-center gap-3 rounded-xl bg-slate-800/50 p-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600/10 text-blue-400">
               <UserIcon size={20} />
@@ -113,21 +120,31 @@ export const Layout: React.FC = () => {
             <LogOut size={16} />
             Sair
           </button>
+
+          {/* Credits / Footer */}
+          <div className="mt-3 border-t border-slate-800/60 pt-2 text-center select-none">
+            <p className="text-[9px] text-slate-500/75 leading-tight">
+              © 2026 Desenvolvido por:
+            </p>
+            <p className="text-[9px] text-slate-500 mt-0.5 leading-tight font-normal">
+              Departamento de Informática - Prefeitura Municipal de Laguna - SEFAZ
+            </p>
+          </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
+        <header className="flex h-16 items-center justify-between border-b border-slate-800 bg-slate-900 px-6 shadow-sm">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setSidebarOpen(true)}
-              className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white lg:hidden"
             >
               <Menu size={22} />
             </button>
-            <h1 className="text-lg font-bold text-slate-800 capitalize">
+            <h1 className="text-lg font-bold text-white tracking-wide capitalize">
               {menuItems.find(item => item.path === location.pathname)?.name || 'Painel'}
             </h1>
           </div>
@@ -136,9 +153,9 @@ export const Layout: React.FC = () => {
           <div className="flex items-center gap-4">
             <Link 
               to="/consulta" 
-              className="flex items-center gap-1.5 rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              className="flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800/90 px-4 py-1.5 text-xs font-semibold text-slate-200 shadow-sm transition-all duration-200 hover:bg-blue-600 hover:text-white hover:border-blue-500"
             >
-              <Search size={14} />
+              <Search size={14} className="text-slate-400 group-hover:text-white" />
               Consulta Pública
             </Link>
           </div>

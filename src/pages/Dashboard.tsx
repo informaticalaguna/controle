@@ -193,46 +193,46 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         
         {/* Total Computers */}
-        <div className="flex items-center gap-4 rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-            <Monitor size={22} />
+        <div className="group flex items-center gap-4 rounded-2xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 p-6 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 transition-transform duration-200 group-hover:scale-105">
+            <Monitor size={22} className="shrink-0" />
           </div>
           <div>
-            <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400">Total de Máquinas</p>
-            <p className="text-2xl font-bold text-slate-800 mt-1">{stats.totalComputers}</p>
+            <p className="text-2xs font-bold uppercase tracking-wider text-blue-900/70">Total de Máquinas</p>
+            <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.totalComputers}</p>
           </div>
         </div>
 
         {/* Active OS */}
-        <div className="flex items-center gap-4 rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-            <Wrench size={22} />
+        <div className="group flex items-center gap-4 rounded-2xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 p-6 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-500/20 transition-transform duration-200 group-hover:scale-105">
+            <Wrench size={22} className="shrink-0" />
           </div>
           <div>
-            <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400">Em Manutenção</p>
-            <p className="text-2xl font-bold text-slate-800 mt-1">{stats.activeOS}</p>
+            <p className="text-2xs font-bold uppercase tracking-wider text-blue-900/70">Em Manutenção</p>
+            <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.activeOS}</p>
           </div>
         </div>
 
         {/* Ready for Pickup */}
-        <div className="flex items-center gap-4 rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-            <Clock size={22} />
+        <div className="group flex items-center gap-4 rounded-2xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 p-6 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-500/20 transition-transform duration-200 group-hover:scale-105">
+            <Clock size={22} className="shrink-0" />
           </div>
           <div>
-            <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400">Prontos p/ Retirada</p>
-            <p className="text-2xl font-bold text-slate-800 mt-1">{stats.readyOS}</p>
+            <p className="text-2xs font-bold uppercase tracking-wider text-blue-900/70">Prontos p/ Retirada</p>
+            <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.readyOS}</p>
           </div>
         </div>
 
         {/* Completed OS */}
-        <div className="flex items-center gap-4 rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-            <CheckCircle size={22} />
+        <div className="group flex items-center gap-4 rounded-2xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 p-6 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-500/20 transition-transform duration-200 group-hover:scale-105">
+            <CheckCircle size={22} className="shrink-0" />
           </div>
           <div>
-            <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400">Concluídos / Entregues</p>
-            <p className="text-2xl font-bold text-slate-800 mt-1">{stats.completedOS}</p>
+            <p className="text-2xs font-bold uppercase tracking-wider text-blue-900/70">Concluídos / Entregues</p>
+            <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.completedOS}</p>
           </div>
         </div>
 
