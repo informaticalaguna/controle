@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { LogIn, Key, Mail, Lock, ShieldAlert, Check } from 'lucide-react';
+import { GeometricMeshCanvas } from '../components/GeometricMeshCanvas';
 
 export const Login: React.FC = () => {
   const { user, loading } = useAuth();
@@ -20,7 +21,7 @@ export const Login: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-slate-50">
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-900">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
       </div>
     );
@@ -73,12 +74,15 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-slate-900 px-4 py-12 overflow-hidden">
-      {/* Decorative Blur Background circles */}
-      <div className="absolute top-1/4 left-1/4 h-96 w-96 -translate-x-1/2 rounded-full bg-blue-600/10 blur-3xl"></div>
-      <div className="absolute bottom-1/4 right-1/4 h-96 w-96 translate-x-1/2 rounded-full bg-emerald-600/10 blur-3xl"></div>
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12 overflow-hidden">
+      {/* Animated Interactive Geometric Triangles Canvas */}
+      <GeometricMeshCanvas variant="dark" />
 
-      <div className="relative w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950/80 p-8 shadow-2xl backdrop-blur-md">
+      {/* Ambient Blur Background Orbs */}
+      <div className="pointer-events-none absolute top-1/4 left-1/4 h-96 w-96 -translate-x-1/2 rounded-full bg-blue-600/10 blur-3xl"></div>
+      <div className="pointer-events-none absolute bottom-1/4 right-1/4 h-96 w-96 translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl"></div>
+
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-slate-800/80 bg-slate-900/85 p-8 shadow-2xl backdrop-blur-xl">
         
         {/* Header */}
         <div className="flex flex-col items-center justify-center text-center pb-8 border-b border-slate-800/80">
