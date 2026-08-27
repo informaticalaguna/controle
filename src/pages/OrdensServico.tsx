@@ -79,7 +79,8 @@ const STANDARD_DEFEITOS = [
   'BARULHO',
   'TELA AZUL',
   'NÃO CONECTA INTERNET',
-  'NÃO ENCONTRADO DEFEITO'
+  'NÃO ENCONTRADO DEFEITO',
+  'OUTROS'
 ];
 
 type SortField = 'id' | 'computador' | 'data_abertura' | 'defeito' | 'status' | 'criado_por' | 'data_entrega';
@@ -171,7 +172,24 @@ export const OrdensServico: React.FC = () => {
       setOrders(osData as unknown as OS[]);
 
       // Fetch defeitos lookup
-      const { data: defData } = await supabase.from('defeitos').select('*').order('nome');
+      let { data: defData } = await supabase.from('defeitos').select('*').order('nome');
+      if (defData) {
+        const hasOutros = defData.some(d => d.nome.toUpperCase() === 'OUTROS');
+        if (!hasOutros) {
+          try {
+            const { data: createdOutros } = await supabase
+              .from('defeitos')
+              .insert({ nome: 'OUTROS' })
+              .select()
+              .maybeSingle();
+            if (createdOutros) {
+              defData.push(createdOutros);
+            }
+          } catch {
+            // Ignore insert error
+          }
+        }
+      }
       setDefeitos(defData || []);
     } catch (err: any) {
       console.error(err);
@@ -288,11 +306,27 @@ export const OrdensServico: React.FC = () => {
   };
 
   const dropdownDefeitos = useMemo(() => {
-    // Only include standard defeitos, with OUTROS at the end
-    const standardList = defeitos.filter(d => STANDARD_DEFEITOS.includes(d.nome.toUpperCase()));
-    const withoutOutros = standardList.filter(d => d.nome.toUpperCase() !== 'OUTROS');
-    const outros = standardList.find(d => d.nome.toUpperCase() === 'OUTROS');
-    return outros ? [...withoutOutros, outros] : standardList;
+    const standardDefeitos = [
+      'BARULHO',
+      'LENTIDÃO',
+      'NÃO CONECTA INTERNET',
+      'NÃO DA VÍDEO',
+      'NÃO ENCONTRADO DEFEITO',
+      'NÃO LIGA',
+      'TELA AZUL',
+      'TRAVAMENTOS',
+      'VÍRUS'
+    ];
+    
+    const list = defeitos.filter(d => standardDefeitos.includes(d.nome.toUpperCase()));
+    list.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    
+    let outrosObj = defeitos.find(d => d.nome.toUpperCase() === 'OUTROS');
+    if (!outrosObj) {
+      outrosObj = { id: 999999, nome: 'OUTROS' };
+    }
+    
+    return [...list, outrosObj];
   }, [defeitos]);
 
   const openEditModal = (os: OS) => {
@@ -311,7 +345,7 @@ export const OrdensServico: React.FC = () => {
       if (outrosObj) {
         setDefeitoId(outrosObj.id);
       } else {
-        setDefeitoId(os.defeito_id);
+        setDefeitoId(999999);
       }
 
       let obs = os.observacao || '';
@@ -392,8 +426,9 @@ export const OrdensServico: React.FC = () => {
     let finalDefeitoId = Number(defeitoId);
     let finalObservacao = observacao.trim().toUpperCase() || null;
     const outrosObj = defeitos.find(d => d.nome.toUpperCase() === 'OUTROS');
+    const isOutros = (outrosObj && Number(defeitoId) === outrosObj.id) || Number(defeitoId) === 999999;
     
-    if (outrosObj && Number(defeitoId) === outrosObj.id) {
+    if (isOutros) {
       const customText = outroDefeitoText.trim().toUpperCase();
       if (!customText) {
         setErrorMsg('Por favor, especifique o defeito apresentado.');
@@ -401,9 +436,32 @@ export const OrdensServico: React.FC = () => {
         return;
       }
 
-      // DO NOT insert custom text into the defeitos lookup table.
-      // Simply use the OUTROS defect ID and store the custom text in the OS observacao.
-      finalDefeitoId = outrosObj.id;
+      // Ensure we have a valid database id for OUTROS
+      let dbOutrosId = outrosObj?.id && outrosObj.id !== 999999 ? outrosObj.id : null;
+      if (!dbOutrosId) {
+        const { data: dbDef } = await supabase
+          .from('defeitos')
+          .select('id')
+          .ilike('nome', 'OUTROS')
+          .maybeSingle();
+
+        if (dbDef?.id) {
+          dbOutrosId = dbDef.id;
+        } else {
+          try {
+            const { data: newDef } = await supabase
+              .from('defeitos')
+              .insert({ nome: 'OUTROS' })
+              .select('id')
+              .maybeSingle();
+            if (newDef?.id) dbOutrosId = newDef.id;
+          } catch {
+            dbOutrosId = defeitos[0]?.id || 1;
+          }
+        }
+      }
+
+      finalDefeitoId = dbOutrosId || (defeitos[0]?.id || 1);
       const especNote = `DEFEITO: ${customText}`;
       if (!finalObservacao) {
         finalObservacao = especNote;
@@ -1156,7 +1214,7 @@ export const OrdensServico: React.FC = () => {
 
                 {(() => {
                   const outrosObj = defeitos.find(d => d.nome.toUpperCase() === 'OUTROS');
-                  const isOutros = outrosObj && Number(defeitoId) === outrosObj.id;
+                  const isOutros = (outrosObj && Number(defeitoId) === outrosObj.id) || Number(defeitoId) === 999999;
                   if (isOutros) {
                     return (
                       <div className="animate-fade-in">
