@@ -54,34 +54,12 @@ export const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Stats
+      // 1. Fetch Total Computers Count
       const { count: compCount } = await supabase
         .from('computadores')
         .select('*', { count: 'exact', head: true });
 
-      const { count: activeCount } = await supabase
-        .from('ordens_servico')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['Em andamento', 'Aguardando peças', 'Pronto para retirada']);
-
-      const { count: readyCount } = await supabase
-        .from('ordens_servico')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'Pronto para retirada');
-
-      const { count: completedCount } = await supabase
-        .from('ordens_servico')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['Concluído', 'Entregue']);
-
-      setStats({
-        totalComputers: compCount || 0,
-        activeOS: activeCount || 0,
-        readyOS: readyCount || 0,
-        completedOS: completedCount || 0
-      });
-
-      // 2. Fetch OS lists
+      // 2. Fetch OS lists with computer details
       const { data, error } = await supabase
         .from('ordens_servico')
         .select(`
@@ -108,12 +86,30 @@ export const Dashboard: React.FC = () => {
 
       const allOS = (data || []) as unknown as OSWithDetails[];
       
-      // Apenas pendências ativas (Em andamento, Aguardando peças, Pronto para retirada)
-      const activeOSList = allOS.filter(os => {
-        const isActiveStatus = os.status === 'Em andamento' || os.status === 'Aguardando peças' || os.status === 'Pronto para retirada';
-        const isCompActive = os.computadores?.ativo !== false;
-        return isActiveStatus && isCompActive;
+      // Filter out OS with inactive computers or canceled OS
+      const validOS = allOS.filter(os => !os.computador_inativo && os.computadores?.ativo !== false);
+
+      const activeCount = validOS.filter(os => 
+        os.status === 'Em andamento' || os.status === 'Aguardando peças' || os.status === 'Pronto para retirada'
+      ).length;
+
+      const readyCount = validOS.filter(os => os.status === 'Pronto para retirada').length;
+
+      const completedCount = validOS.filter(os => 
+        os.status === 'Concluído' || os.status === 'Entregue'
+      ).length;
+
+      setStats({
+        totalComputers: compCount || 0,
+        activeOS: activeCount,
+        readyOS: readyCount,
+        completedOS: completedCount
       });
+
+      // Apenas pendências ativas de computadores ativos (Em andamento, Aguardando peças, Pronto para retirada)
+      const activeOSList = validOS.filter(os => 
+        os.status === 'Em andamento' || os.status === 'Aguardando peças' || os.status === 'Pronto para retirada'
+      );
 
       // 3. Fetch Available and Active Computers
       const { data: compData, error: compErr } = await supabase
