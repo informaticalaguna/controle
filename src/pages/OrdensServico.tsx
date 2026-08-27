@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +16,10 @@ import {
   AlertTriangle,
   Info,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 
 interface OS {
@@ -79,6 +82,9 @@ const STANDARD_DEFEITOS = [
   'NÃO ENCONTRADO DEFEITO'
 ];
 
+type SortField = 'id' | 'computador' | 'data_abertura' | 'defeito' | 'status' | 'criado_por' | 'data_entrega';
+type SortDirection = 'asc' | 'desc';
+
 export const OrdensServico: React.FC = () => {
   const { isAdmin, profile } = useAuth();
   const location = useLocation();
@@ -97,6 +103,8 @@ export const OrdensServico: React.FC = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<SortField>('id');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Form States
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -516,6 +524,19 @@ export const OrdensServico: React.FC = () => {
     return `${day}/${month}/${year}`;
   };
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      if (field === 'id' || field === 'data_abertura' || field === 'data_entrega') {
+        setSortDirection('desc');
+      } else {
+        setSortDirection('asc');
+      }
+    }
+  };
+
   const filteredOrders = orders.filter(o => {
     const textMatch = 
       o.id.toString().includes(searchTerm) ||
@@ -542,11 +563,93 @@ export const OrdensServico: React.FC = () => {
     return textMatch && statusMatch && dateRangeMatch;
   });
 
+  const sortedOrders = useMemo(() => {
+    const list = [...filteredOrders];
+    list.sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'id':
+          comparison = a.id - b.id;
+          break;
+        case 'computador': {
+          const compA = `${a.computadores?.equipamentos?.nome || ''} ${a.computadores?.marcas?.nome || ''} ${a.computadores?.patrimonio || ''} ${a.computadores?.id_legado || ''}`.trim();
+          const compB = `${b.computadores?.equipamentos?.nome || ''} ${b.computadores?.marcas?.nome || ''} ${b.computadores?.patrimonio || ''} ${b.computadores?.id_legado || ''}`.trim();
+          comparison = compA.localeCompare(compB, 'pt-BR', { numeric: true, sensitivity: 'base' });
+          break;
+        }
+        case 'data_abertura': {
+          const dateA = a.data_abertura || '';
+          const dateB = b.data_abertura || '';
+          comparison = dateA.localeCompare(dateB);
+          break;
+        }
+        case 'defeito': {
+          const defA = a.defeitos?.nome || '';
+          const defB = b.defeitos?.nome || '';
+          comparison = defA.localeCompare(defB, 'pt-BR', { sensitivity: 'base' });
+          break;
+        }
+        case 'status': {
+          const statusA = a.computador_inativo ? 'Cancelada' : a.status;
+          const statusB = b.computador_inativo ? 'Cancelada' : b.status;
+          comparison = statusA.localeCompare(statusB, 'pt-BR', { sensitivity: 'base' });
+          break;
+        }
+        case 'criado_por': {
+          const tecA = a.criado_por || '';
+          const tecB = b.criado_por || '';
+          comparison = tecA.localeCompare(tecB, 'pt-BR', { sensitivity: 'base' });
+          break;
+        }
+        case 'data_entrega': {
+          const entA = a.data_entrega || '';
+          const entB = b.data_entrega || '';
+          comparison = entA.localeCompare(entB);
+          break;
+        }
+        default:
+          comparison = 0;
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    return list;
+  }, [filteredOrders, sortField, sortDirection]);
+
   const itemsPerPage = 50;
-  const totalItems = filteredOrders.length;
+  const totalItems = sortedOrders.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedOrders = sortedOrders.slice(startIndex, startIndex + itemsPerPage);
+
+  const renderSortHeader = (field: SortField, label: string) => {
+    const isActive = sortField === field;
+    return (
+      <th 
+        onClick={() => handleSort(field)}
+        className={`py-3.5 px-6 select-none cursor-pointer transition-colors group ${
+          isActive 
+            ? 'text-blue-600 bg-blue-50/50 font-bold' 
+            : 'hover:text-slate-700 hover:bg-slate-100/60'
+        }`}
+        title={`Clique para ordenar por ${label} (${isActive && sortDirection === 'asc' ? 'Decrescente' : 'Crescente'})`}
+      >
+        <div className="flex items-center gap-1.5">
+          <span>{label}</span>
+          <span className="shrink-0 transition-opacity">
+            {isActive ? (
+              sortDirection === 'asc' ? (
+                <ArrowUp size={13} className="text-blue-600 stroke-[2.5]" />
+              ) : (
+                <ArrowDown size={13} className="text-blue-600 stroke-[2.5]" />
+              )
+            ) : (
+              <ArrowUpDown size={12} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </span>
+        </div>
+      </th>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -656,7 +759,7 @@ export const OrdensServico: React.FC = () => {
         <div className="flex h-48 items-center justify-center">
           <Loader2 className="animate-spin text-blue-600" size={32} />
         </div>
-      ) : filteredOrders.length === 0 ? (
+      ) : sortedOrders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-white border border-slate-200/60 rounded-2xl">
           <ClipboardList size={48} className="text-slate-300 mb-2" />
           <p className="text-sm font-semibold text-slate-500">Nenhuma Ordem de Serviço encontrada.</p>
@@ -668,14 +771,14 @@ export const OrdensServico: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  <th className="py-4 px-6">ID da OS</th>
-                  <th className="py-4 px-6">Computador (Patrimônio/Legado)</th>
-                  <th className="py-4 px-6">Abertura</th>
-                  <th className="py-4 px-6">Defeito Reclamado</th>
-                  <th className="py-4 px-6">Status</th>
-                  <th className="py-4 px-6">Técnico</th>
-                  <th className="py-4 px-6">Entrega</th>
-                  <th className="py-4 px-6 text-right">Ações</th>
+                  {renderSortHeader('id', 'OS')}
+                  {renderSortHeader('computador', 'Computador (Patrimônio/Legado)')}
+                  {renderSortHeader('data_abertura', 'Abertura')}
+                  {renderSortHeader('defeito', 'Defeito Reclamado')}
+                  {renderSortHeader('status', 'Status')}
+                  {renderSortHeader('criado_por', 'Técnico')}
+                  {renderSortHeader('data_entrega', 'Entrega')}
+                  <th className="py-3.5 px-6 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">

@@ -337,58 +337,58 @@ export const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       
       {/* Welcome & Stats Row */}
       <div>
         <h2 className="text-xl font-bold text-slate-800">Visão Geral do Departamento</h2>
-        <p className="text-xs text-slate-500 mt-1">Status em tempo real das máquinas e ordens de serviço da prefeitura.</p>
+        <p className="text-xs text-slate-500 mt-0.5">Status em tempo real das máquinas e ordens de serviço da prefeitura.</p>
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         
         {/* Total Computers */}
-        <div className="group flex items-center gap-4 rounded-2xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 p-6 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 transition-transform duration-200 group-hover:scale-105">
-            <Monitor size={22} className="shrink-0" />
+        <div className="group flex items-center gap-3 rounded-xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 px-4 py-3 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm shadow-blue-500/25 transition-transform duration-200 group-hover:scale-105">
+            <Monitor size={17} className="shrink-0" />
           </div>
           <div>
-            <p className="text-2xs font-bold uppercase tracking-wider text-blue-900/70">Total de Máquinas</p>
-            <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.totalComputers}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-900/70">Total de Máquinas</p>
+            <p className="text-xl font-black text-slate-800 leading-tight mt-0.5">{stats.totalComputers}</p>
           </div>
         </div>
 
         {/* Active OS */}
-        <div className="group flex items-center gap-4 rounded-2xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 p-6 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-500/20 transition-transform duration-200 group-hover:scale-105">
-            <Wrench size={22} className="shrink-0" />
+        <div className="group flex items-center gap-3 rounded-xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 px-4 py-3 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white shadow-sm shadow-amber-500/20 transition-transform duration-200 group-hover:scale-105">
+            <Wrench size={17} className="shrink-0" />
           </div>
           <div>
-            <p className="text-2xs font-bold uppercase tracking-wider text-blue-900/70">Em Manutenção</p>
-            <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.activeOS}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-900/70">Em Manutenção</p>
+            <p className="text-xl font-black text-slate-800 leading-tight mt-0.5">{stats.activeOS}</p>
           </div>
         </div>
 
         {/* Ready for Pickup */}
-        <div className="group flex items-center gap-4 rounded-2xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 p-6 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-500/20 transition-transform duration-200 group-hover:scale-105">
-            <Clock size={22} className="shrink-0" />
+        <div className="group flex items-center gap-3 rounded-xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 px-4 py-3 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 transition-transform duration-200 group-hover:scale-105">
+            <Clock size={17} className="shrink-0" />
           </div>
           <div>
-            <p className="text-2xs font-bold uppercase tracking-wider text-blue-900/70">Prontos p/ Retirada</p>
-            <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.readyOS}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-900/70">Prontos p/ Retirada</p>
+            <p className="text-xl font-black text-slate-800 leading-tight mt-0.5">{stats.readyOS}</p>
           </div>
         </div>
 
         {/* Completed OS */}
-        <div className="group flex items-center gap-4 rounded-2xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 p-6 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-500/20 transition-transform duration-200 group-hover:scale-105">
-            <CheckCircle size={22} className="shrink-0" />
+        <div className="group flex items-center gap-3 rounded-xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 px-4 py-3 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm shadow-emerald-500/20 transition-transform duration-200 group-hover:scale-105">
+            <CheckCircle size={17} className="shrink-0" />
           </div>
           <div>
-            <p className="text-2xs font-bold uppercase tracking-wider text-blue-900/70">Concluídos / Entregues</p>
-            <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.completedOS}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-900/70">Concluídos / Entregues</p>
+            <p className="text-xl font-black text-slate-800 leading-tight mt-0.5">{stats.completedOS}</p>
           </div>
         </div>
 
