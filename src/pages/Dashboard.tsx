@@ -391,7 +391,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Quadro Principal: Pendências */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-sm">
         
         {/* Cabeçalho do Quadro */}
         <div className="flex flex-col gap-4 pb-5 border-b border-slate-100 lg:flex-row lg:items-center lg:justify-between">
