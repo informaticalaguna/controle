@@ -270,26 +270,69 @@ export const OrdensServico: React.FC = () => {
     setModalOpen(true);
   };
 
+  const getDefectDisplayName = (os: OS) => {
+    const rawName = os.defeitos?.nome || '';
+    if (rawName.toUpperCase() === 'OUTROS') {
+      if (os.observacao) {
+        if (os.observacao.startsWith('DEFEITO: ')) {
+          return os.observacao.split(' | ')[0].replace('DEFEITO: ', '').trim();
+        }
+        if (os.observacao.includes('DEFEITO ESPECIFICADO: ')) {
+          const match = os.observacao.match(/DEFEITO ESPECIFICADO: ([^|]+)/);
+          if (match) return match[1].trim();
+        }
+      }
+      return 'OUTROS';
+    }
+    return rawName || 'OUTROS';
+  };
+
+  const dropdownDefeitos = useMemo(() => {
+    // Only include standard defeitos, with OUTROS at the end
+    const standardList = defeitos.filter(d => STANDARD_DEFEITOS.includes(d.nome.toUpperCase()));
+    const withoutOutros = standardList.filter(d => d.nome.toUpperCase() !== 'OUTROS');
+    const outros = standardList.find(d => d.nome.toUpperCase() === 'OUTROS');
+    return outros ? [...withoutOutros, outros] : standardList;
+  }, [defeitos]);
+
   const openEditModal = (os: OS) => {
     setIsEditing(true);
     setEditingId(os.id);
     
-    // Check if the defect is standard or custom
+    const outrosObj = defeitos.find(d => d.nome.toUpperCase() === 'OUTROS');
     const defectName = os.defeitos?.nome || '';
-    const isStandard = STANDARD_DEFEITOS.includes(defectName.toUpperCase());
+    const isStandard = STANDARD_DEFEITOS.includes(defectName.toUpperCase()) && defectName.toUpperCase() !== 'OUTROS';
     
     if (isStandard) {
       setDefeitoId(os.defeito_id);
       setOutroDefeitoText('');
+      setObservacao(os.observacao || '');
     } else {
-      const outrosObj = defeitos.find(d => d.nome.toUpperCase() === 'OUTROS');
       if (outrosObj) {
         setDefeitoId(outrosObj.id);
-        setOutroDefeitoText(defectName.toUpperCase() === 'OUTROS' ? '' : defectName);
       } else {
         setDefeitoId(os.defeito_id);
-        setOutroDefeitoText('');
       }
+
+      let obs = os.observacao || '';
+      let customDef = '';
+      if (obs.startsWith('DEFEITO: ')) {
+        const parts = obs.split(' | ');
+        customDef = parts[0].replace('DEFEITO: ', '').trim();
+        obs = parts.slice(1).join(' | ');
+      } else if (obs.includes('DEFEITO ESPECIFICADO: ')) {
+        const parts = obs.split(' | ');
+        const defPart = parts.find(p => p.includes('DEFEITO ESPECIFICADO: '));
+        if (defPart) {
+          customDef = defPart.replace('DEFEITO ESPECIFICADO: ', '').trim();
+          obs = parts.filter(p => !p.includes('DEFEITO ESPECIFICADO: ')).join(' | ');
+        }
+      } else if (!STANDARD_DEFEITOS.includes(defectName.toUpperCase())) {
+        customDef = defectName;
+      }
+
+      setOutroDefeitoText(customDef);
+      setObservacao(obs);
     }
 
     setSolucaoEncontrada(os.solucao_encontrada || '');
@@ -300,7 +343,6 @@ export const OrdensServico: React.FC = () => {
     setEntregue(os.entregue);
     setEntreguePara(os.entregue_para || '');
     setDataEntrega(os.data_entrega || '');
-    setObservacao(os.observacao || '');
     setCriadoPor(os.criado_por || '');
     setComputadorInativo(os.computador_inativo || false);
     setSolicitante(os.solicitante || '');
@@ -359,53 +401,14 @@ export const OrdensServico: React.FC = () => {
         return;
       }
 
-      // Check if it already exists locally
-      const existing = defeitos.find(d => d.nome.toUpperCase() === customText);
-      if (existing) {
-        finalDefeitoId = existing.id;
-      } else {
-        try {
-          // Check database first
-          const { data: dbDef } = await supabase
-            .from('defeitos')
-            .select('id')
-            .ilike('nome', customText)
-            .maybeSingle();
-
-          if (dbDef?.id) {
-            finalDefeitoId = dbDef.id;
-          } else {
-            // Attempt to insert into defeitos table
-            const { data: newDefData, error: newDefErr } = await supabase
-              .from('defeitos')
-              .insert({ nome: customText })
-              .select('id')
-              .maybeSingle();
-
-            if (!newDefErr && newDefData?.id) {
-              finalDefeitoId = newDefData.id;
-            } else {
-              // Fallback if RLS blocks inserting new defect entries for non-admin users:
-              // Use OUTROS defect ID and store the specified defect text in observacao
-              finalDefeitoId = outrosObj.id;
-              const especNote = `DEFEITO ESPECIFICADO: ${customText}`;
-              if (!finalObservacao) {
-                finalObservacao = especNote;
-              } else if (!finalObservacao.includes(customText)) {
-                finalObservacao = `${especNote} | ${finalObservacao}`;
-              }
-            }
-          }
-        } catch (err: any) {
-          console.warn('Fallback para ID de OUTROS devido a restrição de permissão no cadastro de defeitos:', err);
-          finalDefeitoId = outrosObj.id;
-          const especNote = `DEFEITO ESPECIFICADO: ${customText}`;
-          if (!finalObservacao) {
-            finalObservacao = especNote;
-          } else if (!finalObservacao.includes(customText)) {
-            finalObservacao = `${especNote} | ${finalObservacao}`;
-          }
-        }
+      // DO NOT insert custom text into the defeitos lookup table.
+      // Simply use the OUTROS defect ID and store the custom text in the OS observacao.
+      finalDefeitoId = outrosObj.id;
+      const especNote = `DEFEITO: ${customText}`;
+      if (!finalObservacao) {
+        finalObservacao = especNote;
+      } else if (!finalObservacao.includes(`DEFEITO: ${customText}`) && !finalObservacao.includes(customText)) {
+        finalObservacao = `${especNote} | ${finalObservacao}`;
       }
     }
 
@@ -544,6 +547,7 @@ export const OrdensServico: React.FC = () => {
       (o.computadores?.id_legado?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (o.computadores?.secretarias?.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (o.computadores?.local?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      getDefectDisplayName(o).toLowerCase().includes(searchTerm.toLowerCase()) ||
       (o.criado_por?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (o.solicitante?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (o.telefone_contato || '').includes(searchTerm) ||
@@ -584,8 +588,8 @@ export const OrdensServico: React.FC = () => {
           break;
         }
         case 'defeito': {
-          const defA = a.defeitos?.nome || '';
-          const defB = b.defeitos?.nome || '';
+          const defA = getDefectDisplayName(a);
+          const defB = getDefectDisplayName(b);
           comparison = defA.localeCompare(defB, 'pt-BR', { sensitivity: 'base' });
           break;
         }
@@ -821,7 +825,7 @@ export const OrdensServico: React.FC = () => {
                     {/* Defeito */}
                     <td className="py-4 px-6">
                       <span className="inline-flex rounded-lg bg-slate-100 px-2 py-1 text-2xs font-medium text-slate-700">
-                        {os.defeitos?.nome}
+                        {getDefectDisplayName(os)}
                       </span>
                     </td>
 
@@ -1144,7 +1148,7 @@ export const OrdensServico: React.FC = () => {
                     className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-xs focus:border-blue-500 focus:bg-white focus:outline-none"
                   >
                     <option value="" disabled>Selecione o defeito...</option>
-                    {defeitos.map(def => (
+                    {dropdownDefeitos.map(def => (
                       <option key={def.id} value={def.id}>{def.nome}</option>
                     ))}
                   </select>

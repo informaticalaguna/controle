@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -12,7 +12,10 @@ import {
   ShieldAlert,
   SlidersHorizontal,
   Loader2,
-  ArrowLeft
+  ArrowLeft,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
 } from 'lucide-react';
 
 interface Computer {
@@ -39,6 +42,9 @@ interface LookupTable {
   nome: string;
 }
 
+type SortField = 'id' | 'patrimonio' | 'equipamento' | 'secretaria' | 'ativo';
+type SortDirection = 'asc' | 'desc';
+
 export const Computadores: React.FC = () => {
   const { isAdmin } = useAuth();
   const location = useLocation();
@@ -49,6 +55,10 @@ export const Computadores: React.FC = () => {
   const [secretarias, setSecretarias] = useState<LookupTable[]>([]);
   const [marcas, setMarcas] = useState<LookupTable[]>([]);
   const [equipamentos, setEquipamentos] = useState<LookupTable[]>([]);
+
+  // Sorting States
+  const [sortField, setSortField] = useState<SortField>('id');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Loading & UI States
   const [loading, setLoading] = useState(true);
@@ -302,6 +312,19 @@ export const Computadores: React.FC = () => {
     }
   };
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      if (field === 'id' || field === 'patrimonio') {
+        setSortDirection('desc');
+      } else {
+        setSortDirection('asc');
+      }
+    }
+  };
+
   const filteredComputers = computers.filter(c => {
     const secMatch = selectedSecretaria === '' || c.secretaria_id.toString() === selectedSecretaria;
     if (!secMatch) return false;
@@ -331,11 +354,82 @@ export const Computadores: React.FC = () => {
     });
   });
 
+  const sortedComputers = useMemo(() => {
+    const list = [...filteredComputers];
+    list.sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'id':
+          comparison = a.id - b.id;
+          break;
+        case 'patrimonio': {
+          const patA = a.patrimonio ?? -1;
+          const patB = b.patrimonio ?? -1;
+          comparison = patA - patB;
+          break;
+        }
+        case 'equipamento': {
+          const eqA = `${a.equipamentos?.nome || ''} ${a.marcas?.nome || ''}`.trim();
+          const eqB = `${b.equipamentos?.nome || ''} ${b.marcas?.nome || ''}`.trim();
+          comparison = eqA.localeCompare(eqB, 'pt-BR', { sensitivity: 'base' });
+          break;
+        }
+        case 'secretaria': {
+          const secA = `${a.secretarias?.nome || ''} ${a.local || ''} ${a.usuario || ''}`.trim();
+          const secB = `${b.secretarias?.nome || ''} ${b.local || ''} ${b.usuario || ''}`.trim();
+          comparison = secA.localeCompare(secB, 'pt-BR', { sensitivity: 'base' });
+          break;
+        }
+        case 'ativo': {
+          const valA = a.ativo ? 1 : 0;
+          const valB = b.ativo ? 1 : 0;
+          comparison = valA - valB;
+          break;
+        }
+        default:
+          comparison = 0;
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    return list;
+  }, [filteredComputers, sortField, sortDirection]);
+
   const itemsPerPage = 50;
-  const totalItems = filteredComputers.length;
+  const totalItems = sortedComputers.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedComputers = filteredComputers.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedComputers = sortedComputers.slice(startIndex, startIndex + itemsPerPage);
+
+  const renderSortHeader = (field: SortField, label: string, align: 'left' | 'center' | 'right' = 'left') => {
+    const isActive = sortField === field;
+    return (
+      <th 
+        onClick={() => handleSort(field)}
+        className={`py-4 px-6 cursor-pointer select-none transition-colors hover:bg-slate-100/60 group ${
+          align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
+        } ${isActive ? 'text-blue-600 font-bold' : 'text-slate-400'}`}
+      >
+        <div className={`inline-flex items-center gap-1.5 ${
+          align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start'
+        }`}>
+          <span>{label}</span>
+          <span className={`inline-flex flex-col text-[8px] leading-[6px] transition-opacity ${
+            isActive ? 'opacity-100 text-blue-600' : 'opacity-40 group-hover:opacity-80 text-slate-400'
+          }`}>
+            {isActive ? (
+              sortDirection === 'asc' ? (
+                <ArrowUp size={12} className="stroke-[2.5]" />
+              ) : (
+                <ArrowDown size={12} className="stroke-[2.5]" />
+              )
+            ) : (
+              <ArrowUpDown size={12} className="stroke-2" />
+            )}
+          </span>
+        </div>
+      </th>
+    );
+  };
 
 
   return (
@@ -420,11 +514,11 @@ export const Computadores: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  <th className="py-4 px-6">ID / Legado</th>
-                  <th className="py-4 px-6">Patrimônio</th>
-                  <th className="py-4 px-6">Equipamento / Marca</th>
-                  <th className="py-4 px-6">Secretaria / Local</th>
-                  <th className="py-4 px-6 text-center">Ativo</th>
+                  {renderSortHeader('id', 'ID / Legado')}
+                  {renderSortHeader('patrimonio', 'Patrimônio')}
+                  {renderSortHeader('equipamento', 'Equipamento / Marca')}
+                  {renderSortHeader('secretaria', 'Secretaria / Local')}
+                  {renderSortHeader('ativo', 'Ativo', 'center')}
                   <th className="py-4 px-6 text-right">Ações</th>
                 </tr>
               </thead>
