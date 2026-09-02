@@ -411,8 +411,8 @@ export const OrdensServico: React.FC = () => {
       return;
     }
 
-    if (!selectedComp.ativo && !computadorInativo) {
-      setErrorMsg('Não é permitido abrir ou editar Ordens de Serviço para computadores inativos.');
+    if (!isEditing && !selectedComp.ativo && !computadorInativo) {
+      setErrorMsg('Não é permitido abrir novas Ordens de Serviço para computadores inativos.');
       setSubmitting(false);
       return;
     }
@@ -470,6 +470,15 @@ export const OrdensServico: React.FC = () => {
       }
     }
 
+    let calculatedStatus: 'Em andamento' | 'Aguardando peças' | 'Pronto para retirada' | 'Concluído' | 'Entregue' = 'Em andamento';
+    if (entregue) {
+      calculatedStatus = 'Entregue';
+    } else if (reparoConcluido) {
+      calculatedStatus = 'Pronto para retirada';
+    } else if (aguardandoPecas) {
+      calculatedStatus = 'Aguardando peças';
+    }
+
     const payload = {
       computador_id: selectedComp.id,
       defeito_id: finalDefeitoId,
@@ -484,7 +493,8 @@ export const OrdensServico: React.FC = () => {
       observacao: finalObservacao,
       computador_inativo: computadorInativo,
       solicitante: solicitante.trim().toUpperCase() || null,
-      telefone_contato: telefoneContato.trim() || null
+      telefone_contato: telefoneContato.trim() || null,
+      status: calculatedStatus
     };
 
     try {

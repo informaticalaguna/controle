@@ -18,6 +18,7 @@ interface OSWithDetails {
   id: number;
   data_abertura: string;
   status: 'Em andamento' | 'Aguardando peças' | 'Pronto para retirada' | 'Concluído' | 'Entregue' | 'Disponível';
+  aguardando_pecas?: boolean;
   defeitos: { nome: string } | null;
   computador_inativo?: boolean;
   computadores: {
@@ -66,6 +67,7 @@ export const Dashboard: React.FC = () => {
           id,
           data_abertura,
           status,
+          aguardando_pecas,
           computador_inativo,
           defeitos(nome),
           computadores(
@@ -84,10 +86,20 @@ export const Dashboard: React.FC = () => {
 
       if (error) throw error;
 
-      const allOS = (data || []) as unknown as OSWithDetails[];
+      // Garantir que ordens com checkbox aguardando_pecas marcado contem como 'Aguardando peças'
+      const allOS = ((data || []) as any[]).map(os => {
+        let effectiveStatus = os.status;
+        if (os.aguardando_pecas && os.status !== 'Concluído' && os.status !== 'Entregue') {
+          effectiveStatus = 'Aguardando peças';
+        }
+        return {
+          ...os,
+          status: effectiveStatus
+        };
+      }) as OSWithDetails[];
       
-      // Filter out OS with inactive computers or canceled OS
-      const validOS = allOS.filter(os => !os.computador_inativo && os.computadores?.ativo !== false);
+      // Filtrar apenas OS canceladas por computador inativo definitivo. Computadores com OS aberta não são descartados.
+      const validOS = allOS.filter(os => !os.computador_inativo);
 
       const activeCount = validOS.filter(os => 
         os.status === 'Em andamento' || os.status === 'Aguardando peças' || os.status === 'Pronto para retirada'
@@ -106,7 +118,7 @@ export const Dashboard: React.FC = () => {
         completedOS: completedCount
       });
 
-      // Apenas pendências ativas de computadores ativos (Em andamento, Aguardando peças, Pronto para retirada)
+      // Pendências ativas (Em andamento, Aguardando peças, Pronto para retirada)
       const activeOSList = validOS.filter(os => 
         os.status === 'Em andamento' || os.status === 'Aguardando peças' || os.status === 'Pronto para retirada'
       );
@@ -611,6 +623,11 @@ export const Dashboard: React.FC = () => {
                     {os.computadores?.id_legado && (
                       <span className="font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md text-[11px]">
                         {os.computadores.id_legado}
+                      </span>
+                    )}
+                    {os.computadores?.ativo === false && (
+                      <span className="font-extrabold text-red-700 bg-red-100 border border-red-300 px-2 py-0.5 rounded-md text-[10px] uppercase">
+                        Inativo (Descarte)
                       </span>
                     )}
                   </div>

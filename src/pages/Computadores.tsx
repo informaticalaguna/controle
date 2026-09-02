@@ -524,7 +524,7 @@ export const Computadores: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
                 {paginatedComputers.map((comp) => (
-                  <tr key={comp.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={comp.id} className={`transition-colors ${!comp.ativo ? 'bg-red-50/40 hover:bg-red-50/70 border-l-4 border-l-red-500' : 'hover:bg-slate-50/50'}`}>
 
                     {/* ID / Legado */}
                     <td className="py-4 px-6">
@@ -564,10 +564,10 @@ export const Computadores: React.FC = () => {
                     <td className="py-4 px-6">
                       <div className="flex flex-col gap-1 items-center justify-center">
                         <span className={`
-                          inline-flex rounded-full px-2 py-0.5 text-3xs font-bold uppercase tracking-wider
-                          ${comp.ativo ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}
+                          inline-flex rounded-full px-2.5 py-0.5 text-3xs font-extrabold uppercase tracking-wider
+                          ${comp.ativo ? 'bg-emerald-50 text-emerald-700' : 'bg-red-100 text-red-800 border border-red-300 font-black'}
                         `}>
-                          {comp.ativo ? 'Ativo' : 'Inativo'}
+                          {comp.ativo ? 'Ativo' : 'INATIVO (DESCARTE)'}
                         </span>
                         {comp.disponivel && (
                           <span className="inline-flex rounded-full bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 text-3xs font-bold uppercase tracking-wider">
@@ -673,7 +673,13 @@ export const Computadores: React.FC = () => {
       {/* Main Add/Edit Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
-          <div className={`w-full rounded-2xl bg-white p-6 shadow-xl animate-fade-in border border-slate-100 max-h-[90vh] overflow-y-auto transition-all ${isEditing ? 'max-w-4xl' : 'max-w-lg'}`}>
+          <div className={`w-full rounded-2xl bg-white p-6 shadow-xl animate-fade-in max-h-[90vh] overflow-y-auto transition-all ${
+            isEditing ? 'max-w-4xl' : 'max-w-lg'
+          } ${
+            !ativo 
+              ? 'border-4 border-red-600 shadow-2xl shadow-red-600/15' 
+              : 'border border-slate-100'
+          }`}>
 
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="font-bold text-slate-800 text-base">
@@ -686,6 +692,16 @@ export const Computadores: React.FC = () => {
                 <X size={18} />
               </button>
             </div>
+
+            {/* Aviso em destaque vermelho com fonte grande quando o computador for inativo */}
+            {!ativo && (
+              <div className="mt-4 p-4 bg-red-50 border-2 border-red-600 rounded-2xl flex items-center justify-center gap-3 text-red-600 shadow-sm animate-pulse">
+                <ShieldAlert size={32} className="text-red-600 shrink-0" />
+                <span className="text-xl sm:text-2xl font-black tracking-wider uppercase text-red-600">
+                  INATIVO (DESCARTE)
+                </span>
+              </div>
+            )}
 
             {/* Banner de Retorno para OS */}
             {returnToOSId && (
@@ -844,6 +860,13 @@ export const Computadores: React.FC = () => {
                     <span className="text-xs font-semibold text-slate-700">Disponível</span>
                   </label>
                 </div>
+
+                {!ativo && (
+                  <div className="flex items-center gap-2 text-red-600 font-black text-base uppercase tracking-wide">
+                    <ShieldAlert size={20} className="text-red-600 shrink-0" />
+                    <span>INATIVO (DESCARTE)</span>
+                  </div>
+                )}
 
                 {/* Usuário do Computador */}
                 <div>
