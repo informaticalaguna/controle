@@ -256,12 +256,14 @@ export const Computadores: React.FC = () => {
       equipamento_id: Number(equipamentoId),
       ativo,
       garantia_ativa: garantiaAtiva,
-      disponivel,
+      disponivel: ativo ? disponivel : false,
       usuario: usuario.trim().toUpperCase() || null,
       observacao: observacao.trim().toUpperCase() || null
     };
 
     try {
+      let targetCompId = editingId;
+
       if (isEditing && editingId) {
         const { error } = await supabase
           .from('computadores')
@@ -271,12 +273,45 @@ export const Computadores: React.FC = () => {
         if (error) throw error;
         setSuccessMsg('Computador atualizado com sucesso!');
       } else {
-        const { error } = await supabase
+        const { data: newComp, error } = await supabase
           .from('computadores')
-          .insert(payload);
+          .insert(payload)
+          .select('id')
+          .single();
 
         if (error) throw error;
+        targetCompId = newComp?.id;
         setSuccessMsg('Computador adicionado com sucesso!');
+      }
+
+      // Se o computador foi marcado como inativo (descarte), cancelar automaticamente a última OS vinculada
+      if (!ativo && targetCompId) {
+        const { data: latestOS, error: osSearchErr } = await supabase
+          .from('ordens_servico')
+          .select('id, status, computador_inativo')
+          .eq('computador_id', targetCompId)
+          .order('id', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!osSearchErr && latestOS && !latestOS.computador_inativo) {
+          const { error: osUpdateErr } = await supabase
+            .from('ordens_servico')
+            .update({
+              computador_inativo: true,
+              reparo_concluido: false,
+              entregue: false,
+              data_entrega: null,
+              entregue_para: null
+            })
+            .eq('id', latestOS.id);
+
+          if (osUpdateErr) {
+            console.error('Erro ao cancelar automaticamente a última OS vinculada:', osUpdateErr);
+          } else {
+            setSuccessMsg(`Computador salvo como inativo e a OS #${latestOS.id} vinculada foi cancelada com sucesso!`);
+          }
+        }
       }
 
       setModalOpen(false);
@@ -695,11 +730,16 @@ export const Computadores: React.FC = () => {
 
             {/* Aviso em destaque vermelho com fonte grande quando o computador for inativo */}
             {!ativo && (
-              <div className="mt-4 p-4 bg-red-50 border-2 border-red-600 rounded-2xl flex items-center justify-center gap-3 text-red-600 shadow-sm animate-pulse">
-                <ShieldAlert size={32} className="text-red-600 shrink-0" />
-                <span className="text-xl sm:text-2xl font-black tracking-wider uppercase text-red-600">
-                  INATIVO (DESCARTE)
-                </span>
+              <div className="mt-4 p-4 bg-red-50 border-2 border-red-600 rounded-2xl flex flex-col items-center justify-center gap-1.5 text-red-600 shadow-sm">
+                <div className="flex items-center gap-3 animate-pulse">
+                  <ShieldAlert size={32} className="text-red-600 shrink-0" />
+                  <span className="text-xl sm:text-2xl font-black tracking-wider uppercase text-red-600">
+                    INATIVO (DESCARTE)
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-red-700/90 text-center">
+                  Ao salvar, a última Ordem de Serviço vinculada será cancelada automaticamente.
+                </p>
               </div>
             )}
 
