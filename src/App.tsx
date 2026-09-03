@@ -10,6 +10,7 @@ import { PublicSearch } from './pages/PublicSearch';
 import { Dashboard } from './pages/Dashboard';
 import { Computadores } from './pages/Computadores';
 import { OrdensServico } from './pages/OrdensServico';
+import { Rastreio } from './pages/Rastreio';
 import { Tecnicos } from './pages/Tecnicos';
 import { Wifi } from './pages/Wifi';
 
@@ -30,6 +31,7 @@ const App: React.FC = () => {
               <Route path="/" element={<Dashboard />} />
               <Route path="/computadores" element={<Computadores />} />
               <Route path="/ordens" element={<OrdensServico />} />
+              <Route path="/rastreio" element={<Rastreio />} />
               <Route path="/wifi" element={<Wifi />} />
               
               {/* Admin Only Screens */}

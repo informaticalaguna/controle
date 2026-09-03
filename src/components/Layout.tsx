@@ -5,6 +5,7 @@ import {
   LayoutDashboard, 
   Monitor, 
   ClipboardList, 
+  Route,
   LogOut, 
   Menu, 
   X, 
@@ -24,6 +25,7 @@ export const Layout: React.FC = () => {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Computadores', path: '/computadores', icon: Monitor },
     { name: 'Ordens de Serviço', path: '/ordens', icon: ClipboardList },
+    { name: 'Rastreio', path: '/rastreio', icon: Route },
   ];
 
   if (isAdmin) {

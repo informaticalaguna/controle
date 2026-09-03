@@ -17,6 +17,7 @@ import {
   Info,
   Loader2,
   ExternalLink,
+  ArrowLeft,
   ArrowUpDown,
   ArrowUp,
   ArrowDown
@@ -98,6 +99,9 @@ export const OrdensServico: React.FC = () => {
   // UI & Loading States
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [returnToRastreioTerm, setReturnToRastreioTerm] = useState<string | null>(null);
+  const [returnToRastreioCompId, setReturnToRastreioCompId] = useState<number | null>(null);
+  const [returnToDashboard, setReturnToDashboard] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
@@ -212,11 +216,34 @@ export const OrdensServico: React.FC = () => {
       const osId = (location.state as any).editOSId;
       const found = orders.find(o => o.id === osId);
       if (found) {
+        if ((location.state as any).returnToRastreioTerm) {
+          setReturnToRastreioTerm((location.state as any).returnToRastreioTerm);
+        }
+        if ((location.state as any).returnToRastreioCompId) {
+          setReturnToRastreioCompId((location.state as any).returnToRastreioCompId);
+        }
+        if ((location.state as any).returnToDashboard) {
+          setReturnToDashboard(true);
+        }
         openEditModal(found);
         navigate(location.pathname, { replace: true, state: {} });
       }
     }
   }, [location.state, orders, navigate]);
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    if (returnToRastreioTerm) {
+      navigate('/rastreio', {
+        state: {
+          searchCode: returnToRastreioTerm,
+          selectedCompId: returnToRastreioCompId || selectedComp?.id || undefined
+        }
+      });
+    } else if (returnToDashboard) {
+      navigate('/');
+    }
+  };
 
   // Handle autocomplete query for computers
   useEffect(() => {
@@ -525,6 +552,18 @@ export const OrdensServico: React.FC = () => {
 
       setModalOpen(false);
       fetchData();
+      if (returnToRastreioTerm) {
+        navigate('/rastreio', {
+          state: {
+            searchCode: returnToRastreioTerm,
+            selectedCompId: returnToRastreioCompId || selectedComp?.id || undefined
+          }
+        });
+        return;
+      } else if (returnToDashboard) {
+        navigate('/');
+        return;
+      }
       const msg = isEditing ? 'Ordem de Serviço atualizada com sucesso!' : 'Ordem de Serviço aberta com sucesso!';
       setSuccessMsg(msg);
       setTimeout(() => setSuccessMsg(''), 4000);
@@ -1034,12 +1073,53 @@ export const OrdensServico: React.FC = () => {
                 {isEditing ? `Editar OS #${editingId}` : 'Abrir Nova Ordem de Serviço'}
               </h3>
               <button 
-                onClick={() => setModalOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-900"
+                onClick={handleCloseModal}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+                title="Fechar"
               >
                 <X size={18} />
               </button>
             </div>
+
+            {/* Banner de Retorno para Rastreio */}
+            {returnToRastreioTerm && (
+              <div className="mt-4 p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl flex items-center justify-between text-xs text-blue-900 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <ArrowLeft size={16} className="text-blue-600 shrink-0" />
+                  <span>
+                    Acesso via atalho da tela de <strong>Rastreio</strong> ({returnToRastreioTerm}).
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-2xs whitespace-nowrap cursor-pointer"
+                >
+                  <ArrowLeft size={12} />
+                  <span>Voltar ao Rastreio</span>
+                </button>
+              </div>
+            )}
+
+            {/* Banner de Retorno para Dashboard */}
+            {returnToDashboard && !returnToRastreioTerm && (
+              <div className="mt-4 p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl flex items-center justify-between text-xs text-blue-900 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <ArrowLeft size={16} className="text-blue-600 shrink-0" />
+                  <span>
+                    Acesso via atalho do <strong>Dashboard</strong>.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-2xs whitespace-nowrap cursor-pointer"
+                >
+                  <ArrowLeft size={12} />
+                  <span>Voltar ao Dashboard</span>
+                </button>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
               
@@ -1431,8 +1511,8 @@ export const OrdensServico: React.FC = () => {
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
+                  onClick={handleCloseModal}
+                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>

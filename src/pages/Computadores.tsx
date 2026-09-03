@@ -68,6 +68,9 @@ export const Computadores: React.FC = () => {
   const [selectedSecretaria, setSelectedSecretaria] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [returnToOSId, setReturnToOSId] = useState<number | boolean | null>(null);
+  const [returnToRastreioTerm, setReturnToRastreioTerm] = useState<string | null>(null);
+  const [returnToRastreioCompId, setReturnToRastreioCompId] = useState<number | null>(null);
+  const [returnToDashboard, setReturnToDashboard] = useState<boolean>(false);
 
   // History States
   const [history, setHistory] = useState<any[]>([]);
@@ -139,6 +142,15 @@ export const Computadores: React.FC = () => {
         } else if (location.state.returnToOS) {
           setReturnToOSId(true);
         }
+        if (location.state.returnToRastreioTerm) {
+          setReturnToRastreioTerm(location.state.returnToRastreioTerm);
+        }
+        if (location.state.returnToRastreioCompId) {
+          setReturnToRastreioCompId(location.state.returnToRastreioCompId);
+        }
+        if (location.state.returnToDashboard) {
+          setReturnToDashboard(true);
+        }
         openEditModal(comp);
         navigate(location.pathname, { replace: true, state: {} });
       }
@@ -150,6 +162,20 @@ export const Computadores: React.FC = () => {
       navigate('/ordens', { state: { editOSId: returnToOSId } });
     } else {
       navigate('/ordens');
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    if (returnToRastreioTerm) {
+      navigate('/rastreio', {
+        state: {
+          searchCode: returnToRastreioTerm,
+          selectedCompId: returnToRastreioCompId || editingId || undefined
+        }
+      });
+    } else if (returnToDashboard) {
+      navigate('/');
     }
   };
 
@@ -316,6 +342,18 @@ export const Computadores: React.FC = () => {
 
       setModalOpen(false);
       fetchData();
+      if (returnToRastreioTerm) {
+        navigate('/rastreio', {
+          state: {
+            searchCode: returnToRastreioTerm,
+            selectedCompId: returnToRastreioCompId || editingId || undefined
+          }
+        });
+        return;
+      } else if (returnToDashboard) {
+        navigate('/');
+        return;
+      }
     } catch (err: any) {
       console.error(err);
       setErrorMsg(err.message || 'Ocorreu um erro ao salvar o registro.');
@@ -721,8 +759,9 @@ export const Computadores: React.FC = () => {
                 {isEditing ? 'Editar Computador' : 'Cadastrar Novo Computador'}
               </h3>
               <button
-                onClick={() => setModalOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-900"
+                onClick={handleCloseModal}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+                title="Fechar"
               >
                 <X size={18} />
               </button>
@@ -759,6 +798,46 @@ export const Computadores: React.FC = () => {
                 >
                   <ArrowLeft size={12} />
                   <span>Voltar para a OS</span>
+                </button>
+              </div>
+            )}
+
+            {/* Banner de Retorno para Rastreio */}
+            {returnToRastreioTerm && (
+              <div className="mt-4 p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl flex items-center justify-between text-xs text-blue-900 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <ArrowLeft size={16} className="text-blue-600 shrink-0" />
+                  <span>
+                    Acesso via atalho da tela de <strong>Rastreio</strong> ({returnToRastreioTerm}).
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-2xs whitespace-nowrap cursor-pointer"
+                >
+                  <ArrowLeft size={12} />
+                  <span>Voltar ao Rastreio</span>
+                </button>
+              </div>
+            )}
+
+            {/* Banner de Retorno para Dashboard */}
+            {returnToDashboard && !returnToRastreioTerm && (
+              <div className="mt-4 p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl flex items-center justify-between text-xs text-blue-900 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <ArrowLeft size={16} className="text-blue-600 shrink-0" />
+                  <span>
+                    Acesso via atalho do <strong>Dashboard</strong>.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-2xs whitespace-nowrap cursor-pointer"
+                >
+                  <ArrowLeft size={12} />
+                  <span>Voltar ao Dashboard</span>
                 </button>
               </div>
             )}
@@ -949,8 +1028,8 @@ export const Computadores: React.FC = () => {
                   )}
                   <button
                     type="button"
-                    onClick={() => setModalOpen(false)}
-                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
+                    onClick={handleCloseModal}
+                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>

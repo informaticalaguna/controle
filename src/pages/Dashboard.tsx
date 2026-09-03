@@ -177,9 +177,9 @@ export const Dashboard: React.FC = () => {
 
   const handleCardClick = (osId: number) => {
     if (osId < 0) {
-      navigate('/computadores', { state: { editCompId: -osId } });
+      navigate('/computadores', { state: { editCompId: -osId, returnToDashboard: true } });
     } else {
-      navigate('/ordens', { state: { editOSId: osId } });
+      navigate('/ordens', { state: { editOSId: osId, returnToDashboard: true } });
     }
   };
 
