@@ -345,61 +345,63 @@ export const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 animate-fade-in">
       
-      {/* Welcome & Stats Row */}
-      <div>
-        <h2 className="text-xl font-bold text-slate-800">Visão Geral do Departamento</h2>
-        <p className="text-xs text-slate-500 mt-0.5">Status em tempo real das máquinas e ordens de serviço da prefeitura.</p>
-      </div>
-
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-        
-        {/* Total Computers */}
-        <div className="group flex items-center gap-3 rounded-xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 px-4 py-3 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm shadow-blue-500/25 transition-transform duration-200 group-hover:scale-105">
-            <Monitor size={17} className="shrink-0" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-900/70">Total de Máquinas</p>
-            <p className="text-xl font-black text-slate-800 leading-tight mt-0.5">{stats.totalComputers}</p>
-          </div>
+      {/* Header com Resumo Compacto Integrado */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">Visão Geral do Departamento</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Status em tempo real das máquinas e ordens de serviço da prefeitura.</p>
         </div>
 
-        {/* Active OS */}
-        <div className="group flex items-center gap-3 rounded-xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 px-4 py-3 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white shadow-sm shadow-amber-500/20 transition-transform duration-200 group-hover:scale-105">
-            <Wrench size={17} className="shrink-0" />
+        {/* Barra de Resumo Compacta (Estilo Claro Harmonioso) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 rounded-xl bg-white border border-slate-200/80 p-1 shadow-sm">
+          
+          {/* Total Computers */}
+          <div className="flex items-center gap-2 px-3 py-1.5 transition-colors hover:bg-slate-50/70 rounded-lg">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600 border border-blue-100/80">
+              <Monitor size={13} className="shrink-0" />
+            </div>
+            <div className="flex items-baseline gap-1.5 min-w-0">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 truncate">Total:</span>
+              <span className="text-sm font-semibold text-slate-700">{stats.totalComputers}</span>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-900/70">Em Manutenção</p>
-            <p className="text-xl font-black text-slate-800 leading-tight mt-0.5">{stats.activeOS}</p>
-          </div>
-        </div>
 
-        {/* Ready for Pickup */}
-        <div className="group flex items-center gap-3 rounded-xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 px-4 py-3 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 transition-transform duration-200 group-hover:scale-105">
-            <Clock size={17} className="shrink-0" />
+          {/* Active OS */}
+          <div className="flex items-center gap-2 px-3 py-1.5 transition-colors hover:bg-slate-50/70 rounded-lg">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-amber-50 text-amber-600 border border-amber-200/60">
+              <Wrench size={13} className="shrink-0" />
+            </div>
+            <div className="flex items-baseline gap-1.5 min-w-0">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 truncate">Manutenção:</span>
+              <span className="text-sm font-semibold text-slate-700">{stats.activeOS}</span>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-900/70">Prontos p/ Retirada</p>
-            <p className="text-xl font-black text-slate-800 leading-tight mt-0.5">{stats.readyOS}</p>
-          </div>
-        </div>
 
-        {/* Completed OS */}
-        <div className="group flex items-center gap-3 rounded-xl bg-gradient-to-br from-blue-100/60 via-blue-50/80 to-sky-50/70 px-4 py-3 shadow-sm shadow-blue-900/5 border border-blue-200/80 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm shadow-emerald-500/20 transition-transform duration-200 group-hover:scale-105">
-            <CheckCircle size={17} className="shrink-0" />
+          {/* Ready for Pickup */}
+          <div className="flex items-center gap-2 px-3 py-1.5 transition-colors hover:bg-slate-50/70 rounded-lg">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100/80">
+              <Clock size={13} className="shrink-0" />
+            </div>
+            <div className="flex items-baseline gap-1.5 min-w-0">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 truncate">Prontos:</span>
+              <span className="text-sm font-semibold text-slate-700">{stats.readyOS}</span>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-900/70">Concluídos / Entregues</p>
-            <p className="text-xl font-black text-slate-800 leading-tight mt-0.5">{stats.completedOS}</p>
-          </div>
-        </div>
 
+          {/* Completed OS */}
+          <div className="flex items-center gap-2 px-3 py-1.5 transition-colors hover:bg-slate-50/70 rounded-lg">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100/80">
+              <CheckCircle size={13} className="shrink-0" />
+            </div>
+            <div className="flex items-baseline gap-1.5 min-w-0">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 truncate">Concluídos:</span>
+              <span className="text-sm font-semibold text-slate-700">{stats.completedOS}</span>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       {/* Quadro Principal: Pendências */}
