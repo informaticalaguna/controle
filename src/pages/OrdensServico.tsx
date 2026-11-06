@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { 
   Plus, 
   Search, 
@@ -148,8 +149,8 @@ export const OrdensServico: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       // Fetch OS
       const { data: osData, error: osErr } = await supabase
@@ -197,15 +198,17 @@ export const OrdensServico: React.FC = () => {
       setDefeitos(defData || []);
     } catch (err: any) {
       console.error(err);
-      setErrorMsg('Erro ao buscar dados das Ordens de Serviço.');
+      if (!silent) setErrorMsg('Erro ao buscar dados das Ordens de Serviço.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useAutoRefresh(() => fetchData(true), modalOpen || submitting);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -1065,7 +1068,11 @@ export const OrdensServico: React.FC = () => {
 
       {/* Main OS Add/Edit Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+        <div
+          data-modal-open="true"
+          data-submitting={submitting ? 'true' : undefined}
+          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs"
+        >
           <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl animate-fade-in border border-slate-100 max-h-[90vh] overflow-y-auto">
             
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { 
   Monitor, 
   Wrench, 
@@ -52,8 +53,8 @@ export const Dashboard: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('status_prioridade');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  const fetchDashboardData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       // 1. Fetch Total Computers Count
       const { count: compCount } = await supabase
@@ -167,13 +168,15 @@ export const Dashboard: React.FC = () => {
     } catch (err) {
       console.error('Erro ao buscar dados do dashboard:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  useAutoRefresh(() => fetchDashboardData(true));
 
   const handleCardClick = (osId: number) => {
     if (osId < 0) {

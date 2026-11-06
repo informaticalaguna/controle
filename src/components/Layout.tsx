@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import {
+  AUTO_REFRESH_EVENT,
+  AUTO_REFRESH_COMPLETED_EVENT,
+  IDLE_THRESHOLD_MS,
+  REFRESH_INTERVAL_MS,
+  isDomUserBusy
+} from '../hooks/useAutoRefresh';
 import { 
   LayoutDashboard, 
   Monitor, 
@@ -13,13 +20,94 @@ import {
   Search,
   Users,
   Wifi,
-  Laptop
+  Laptop,
+  RefreshCw
 } from 'lucide-react';
 
 export const Layout: React.FC = () => {
   const { profile, signOut, isAdmin } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [isSyncing, setIsSyncing] = useState(false);
   const location = useLocation();
+
+  const lastActivityRef = useRef<number>(Date.now());
+  const lastRefreshRef = useRef<number>(Date.now());
+
+  // Atualiza referência ao trocar de rota
+  useEffect(() => {
+    const now = Date.now();
+    lastRefreshRef.current = now;
+    setLastUpdated(new Date());
+  }, [location.pathname]);
+
+  // Monitora atividade do usuário e agenda atualização automática quando ocioso
+  useEffect(() => {
+    const recordActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'wheel', 'input', 'change'];
+    activityEvents.forEach(evt => window.addEventListener(evt, recordActivity, { passive: true }));
+
+    const handleRefreshCompleted = (e: Event) => {
+      const customEvt = e as CustomEvent<{ timestamp?: Date }>;
+      lastRefreshRef.current = Date.now();
+      setLastUpdated(customEvt.detail?.timestamp || new Date());
+      setTimeout(() => setIsSyncing(false), 400);
+    };
+
+    window.addEventListener(AUTO_REFRESH_COMPLETED_EVENT, handleRefreshCompleted);
+
+    // Ao retornar para a aba ou reconectar à rede após período inativo, sincroniza caso não esteja editando
+    const handleVisibilityOrOnline = () => {
+      if (document.visibilityState === 'visible') {
+        const now = Date.now();
+        if (now - lastRefreshRef.current >= IDLE_THRESHOLD_MS && !isDomUserBusy()) {
+          lastRefreshRef.current = now;
+          setIsSyncing(true);
+          window.dispatchEvent(new CustomEvent(AUTO_REFRESH_EVENT));
+          setTimeout(() => setIsSyncing(false), 1500);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityOrOnline);
+    window.addEventListener('online', handleVisibilityOrOnline);
+
+    // Verifica periodicamente se o sistema está sem uso para atualizar os dados em segundo plano
+    const intervalId = window.setInterval(() => {
+      const now = Date.now();
+      const idleDuration = now - lastActivityRef.current;
+      const sinceLastRefresh = now - lastRefreshRef.current;
+
+      if (
+        idleDuration >= IDLE_THRESHOLD_MS &&
+        sinceLastRefresh >= REFRESH_INTERVAL_MS &&
+        !isDomUserBusy()
+      ) {
+        lastRefreshRef.current = now;
+        setIsSyncing(true);
+        window.dispatchEvent(new CustomEvent(AUTO_REFRESH_EVENT));
+        setTimeout(() => setIsSyncing(false), 1500);
+      }
+    }, 10000);
+
+    return () => {
+      activityEvents.forEach(evt => window.removeEventListener(evt, recordActivity));
+      window.removeEventListener(AUTO_REFRESH_COMPLETED_EVENT, handleRefreshCompleted);
+      document.removeEventListener('visibilitychange', handleVisibilityOrOnline);
+      window.removeEventListener('online', handleVisibilityOrOnline);
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  const handleManualRefresh = () => {
+    lastRefreshRef.current = Date.now();
+    setIsSyncing(true);
+    window.dispatchEvent(new CustomEvent(AUTO_REFRESH_EVENT, { detail: { force: true } }));
+    setTimeout(() => setIsSyncing(false), 1500);
+  };
 
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -163,8 +251,26 @@ export const Layout: React.FC = () => {
             </h1>
           </div>
 
-          {/* Quick link to public search */}
-          <div className="relative z-10 flex items-center gap-2 sm:gap-4 shrink-0">
+          {/* Status de Sincronização e Link para Consulta Pública */}
+          <div className="relative z-10 flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={handleManualRefresh}
+              disabled={isSyncing}
+              title={`Atualização automática ativa quando ocioso. Última sincronização: ${lastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}. Clique para atualizar agora.`}
+              className="flex items-center gap-1.5 rounded-full border border-slate-700/80 bg-slate-800/70 px-2.5 sm:px-3 py-1.5 text-[11px] font-medium text-slate-300 transition-all duration-200 hover:bg-slate-800 hover:text-white hover:border-slate-600 cursor-pointer disabled:opacity-70"
+            >
+              <RefreshCw
+                size={13}
+                className={`shrink-0 ${isSyncing ? 'animate-spin text-blue-400' : 'text-emerald-400'}`}
+              />
+              <span className="hidden md:inline">
+                {isSyncing
+                  ? 'Atualizando...'
+                  : `Sincronizado ${lastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
+              </span>
+            </button>
+
             <Link 
               to="/consulta" 
               className="flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800/90 px-3 sm:px-4 py-1.5 text-xs font-semibold text-slate-200 shadow-sm transition-all duration-200 hover:bg-blue-600 hover:text-white hover:border-blue-500 hover:shadow-md hover:shadow-blue-600/20"

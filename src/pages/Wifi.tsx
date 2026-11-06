@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { 
   Plus, 
   Search, 
@@ -66,8 +67,8 @@ export const Wifi: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       let query = supabase.from('redes_wifi').select('*').order('local');
       
@@ -82,7 +83,7 @@ export const Wifi: React.FC = () => {
     } catch (err) {
       console.error('Erro ao buscar redes:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -92,6 +93,8 @@ export const Wifi: React.FC = () => {
     }, 300);
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
+
+  useAutoRefresh(() => fetchData(true), modalOpen || submitting);
 
   const resetForm = () => {
     setLocal('');
@@ -444,7 +447,11 @@ export const Wifi: React.FC = () => {
 
       {/* Add/Edit Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          data-modal-open="true"
+          data-submitting={submitting ? 'true' : undefined}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
           {/* Modal Overlay */}
           <div 
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"

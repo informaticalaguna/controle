@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import {
   Search,
   Monitor,
@@ -204,6 +205,52 @@ export const Rastreio: React.FC = () => {
       handleSearch(codeParam, targetCompId);
     }
   }, [location.search, location.state, handleSearch]);
+
+  // Atualização silenciosa em segundo plano caso haja um computador selecionado
+  useAutoRefresh(async () => {
+    if (!selectedComputer) return;
+    try {
+      const { data: compData } = await supabase
+        .from('computadores')
+        .select(`
+          id,
+          id_legado,
+          patrimonio,
+          data_cadastro,
+          local,
+          ativo,
+          garantia_ativa,
+          disponivel,
+          usuario,
+          observacao,
+          secretarias(nome),
+          marcas(nome),
+          equipamentos(nome)
+        `)
+        .eq('id', selectedComputer.id)
+        .maybeSingle();
+
+      if (compData) {
+        setSelectedComputer(compData as unknown as ComputerResult);
+      }
+
+      const { data: osData } = await supabase
+        .from('ordens_servico')
+        .select(`
+          *,
+          defeitos (nome)
+        `)
+        .eq('computador_id', selectedComputer.id)
+        .order('data_abertura', { ascending: true })
+        .order('id', { ascending: true });
+
+      if (osData) {
+        setWorkOrders(osData as unknown as WorkOrder[]);
+      }
+    } catch (err) {
+      console.error('Erro ao atualizar rastreio em segundo plano:', err);
+    }
+  }, isSearching || loadingOrders);
 
   // Derived metrics from work orders (chronological basis)
   // Note: workOrders is originally ordered ascending (1st to last)

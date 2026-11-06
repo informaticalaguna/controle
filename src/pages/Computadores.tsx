@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import {
   Plus,
   Search,
@@ -95,8 +96,8 @@ export const Computadores: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       // Fetch computers
       const { data: compData, error: compErr } = await supabase
@@ -123,15 +124,17 @@ export const Computadores: React.FC = () => {
 
     } catch (err: any) {
       console.error(err);
-      setErrorMsg('Erro ao carregar os dados. Recarregue a página.');
+      if (!silent) setErrorMsg('Erro ao carregar os dados. Recarregue a página.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useAutoRefresh(() => fetchData(true), modalOpen || submitting);
 
   useEffect(() => {
     if (location.state?.editCompId && computers.length > 0) {
@@ -745,7 +748,11 @@ export const Computadores: React.FC = () => {
 
       {/* Main Add/Edit Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+        <div
+          data-modal-open="true"
+          data-submitting={submitting ? 'true' : undefined}
+          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs"
+        >
           <div className={`w-full rounded-2xl bg-white p-6 shadow-xl animate-fade-in max-h-[90vh] overflow-y-auto transition-all ${
             isEditing ? 'max-w-4xl' : 'max-w-lg'
           } ${

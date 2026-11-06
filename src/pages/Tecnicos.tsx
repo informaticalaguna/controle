@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '../context/AuthContext';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { UserPlus, Users, Shield, ShieldAlert, Loader2, Edit2, Trash2, X } from 'lucide-react';
 
 interface Profile {
@@ -36,8 +37,8 @@ export const Tecnicos: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const fetchProfiles = async () => {
-    setLoading(true);
+  const fetchProfiles = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -48,13 +49,24 @@ export const Tecnicos: React.FC = () => {
     } catch (err) {
       console.error('Erro ao buscar perfis:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchProfiles();
   }, []);
+
+  const isFormBusy = Boolean(
+    isEditing ||
+    submitting ||
+    nomeCompleto.trim() ||
+    cargo.trim() ||
+    email.trim() ||
+    password.trim()
+  );
+
+  useAutoRefresh(() => fetchProfiles(true), isFormBusy);
 
   const resetForm = () => {
     setEmail('');
@@ -198,7 +210,11 @@ export const Tecnicos: React.FC = () => {
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       
       {/* Col 1: Add/Edit technician form */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm h-fit">
+      <div
+        data-form-busy={isFormBusy ? 'true' : undefined}
+        data-submitting={submitting ? 'true' : undefined}
+        className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm h-fit"
+      >
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
           <div className="flex items-center gap-2">
             <UserPlus size={18} className="text-blue-600" />
