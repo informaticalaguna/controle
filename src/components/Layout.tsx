@@ -20,7 +20,6 @@ import {
   Search,
   Users,
   Wifi,
-  Laptop,
   RefreshCw
 } from 'lucide-react';
 
@@ -134,20 +133,16 @@ export const Layout: React.FC = () => {
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-slate-900 text-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 border-r border-slate-800/80 shadow-lg overflow-hidden shrink-0
+        fixed inset-y-0 left-0 z-50 flex w-52 flex-col bg-slate-900 text-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 border-r border-slate-800/80 shadow-lg overflow-hidden shrink-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        {/* Background Laptop Watermark Effect */}
-        <div className="pointer-events-none absolute -right-8 bottom-24 select-none text-blue-400 opacity-[0.05] rotate-[-10deg] transition-opacity duration-300">
-          <Laptop size={220} strokeWidth={1} />
-        </div>
         <div className="pointer-events-none absolute -right-6 bottom-32 h-36 w-36 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="pointer-events-none absolute -left-6 top-20 h-32 w-32 rounded-full bg-sky-500/10 blur-3xl" />
 
         {/* Sidebar Header */}
-        <div className="relative z-10 flex h-16 items-center justify-between border-b border-slate-800 px-4 shrink-0">
-          <Link to="/" className="flex items-center gap-2.5 font-bold text-sm text-white">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/30">
+        <div className="relative z-10 flex h-16 items-center justify-between border-b border-slate-800 px-3.5 shrink-0">
+          <Link to="/" className="flex items-center gap-2 font-bold text-sm text-white min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/30">
               <img 
                 src="/logo.svg" 
                 alt="Logo" 
@@ -169,7 +164,7 @@ export const Layout: React.FC = () => {
         </div>
 
         {/* Navigation Items */}
-        <nav className="relative z-10 flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+        <nav className="relative z-10 flex-1 space-y-1 px-2.5 py-4 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -193,17 +188,17 @@ export const Layout: React.FC = () => {
         </nav>
 
         {/* User Profile Summary */}
-        <div className="relative z-10 border-t border-slate-800 p-3 shrink-0">
-          <div className="flex items-center gap-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 p-2.5 shadow-sm">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20">
-              <UserIcon size={16} />
+        <div className="relative z-10 border-t border-slate-800 p-2.5 shrink-0">
+          <div className="flex items-center gap-2 rounded-xl bg-slate-800/60 border border-slate-700/50 p-2 shadow-sm">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20">
+              <UserIcon size={15} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="truncate text-xs font-bold text-slate-200">{profile?.nome_completo || 'Carregando...'}</p>
               <p className="truncate text-[10px] font-medium text-slate-400">{profile?.cargo || 'TI'}</p>
             </div>
             <span className={`
-              inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border
+              inline-flex shrink-0 items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border
               ${profile?.permissao === 'Administrador' ? 'bg-amber-400/15 text-amber-400 border-amber-400/30' : 'bg-slate-700 text-slate-300 border-slate-600'}
             `}>
               {profile?.permissao === 'Administrador' ? 'Admin' : 'Nível 1'}
