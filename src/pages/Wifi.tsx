@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
@@ -16,8 +16,20 @@ import {
   Check, 
   Info,
   Server,
-  Network
+  Network,
+  Activity,
+  ExternalLink
 } from 'lucide-react';
+
+interface PingResult {
+  status: 'online' | 'offline';
+  timestamp: number;
+  ip: string;
+  latency?: string;
+}
+
+const PING_CACHE_KEY = 'wifi_ping_results_v1';
+const ONE_HOUR_MS = 60 * 60 * 1000;
 
 interface WifiNetwork {
   id: number;
@@ -50,6 +62,123 @@ export const Wifi: React.FC = () => {
   const [revealWifi, setRevealWifi] = useState<Record<number, boolean>>({});
   const [revealAccess, setRevealAccess] = useState<Record<number, boolean>>({});
   const [copiedField, setCopiedField] = useState<{ id: number; field: string } | null>(null);
+
+  // Ping states (persisted in localStorage to respect the 1-hour interval across navigation)
+  const [pingResults, setPingResults] = useState<Record<number, PingResult>>(() => {
+    try {
+      const saved = localStorage.getItem(PING_CACHE_KEY);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [pingLoading, setPingLoading] = useState<Record<number, boolean>>({});
+  const pingResultsRef = useRef<Record<number, PingResult>>(pingResults);
+  const pingLoadingRef = useRef<Record<number, boolean>>({});
+
+  useEffect(() => {
+    pingResultsRef.current = pingResults;
+    try {
+      localStorage.setItem(PING_CACHE_KEY, JSON.stringify(pingResults));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }, [pingResults]);
+
+  const executePing = useCallback(async (net: WifiNetwork) => {
+    const targetIp = net.ip?.trim();
+    if (!targetIp || pingLoadingRef.current[net.id]) return;
+
+    pingLoadingRef.current[net.id] = true;
+    setPingLoading(prev => ({ ...prev, [net.id]: true }));
+
+    let isOnline = false;
+    let latency: string | undefined = undefined;
+
+    try {
+      const res = await fetch(`/api/ping?ip=${encodeURIComponent(targetIp)}`);
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        isOnline = Boolean(data.online);
+        latency = data.latency;
+      } else {
+        // Fallback para probe HTTP direto caso rode sem o middleware local
+        const cleanHost = targetIp.replace(/^https?:\/\//i, '').split('/')[0];
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 2000);
+        const start = performance.now();
+        try {
+          await fetch(`http://${cleanHost}`, {
+            mode: 'no-cors',
+            cache: 'no-store',
+            signal: controller.signal
+          });
+          isOnline = true;
+          latency = `${Math.round(performance.now() - start)}ms`;
+        } catch {
+          isOnline = false;
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
+      }
+    } catch {
+      isOnline = false;
+    } finally {
+      const newResult: PingResult = {
+        status: isOnline ? 'online' : 'offline',
+        timestamp: Date.now(),
+        ip: targetIp,
+        latency
+      };
+
+      pingResultsRef.current = {
+        ...pingResultsRef.current,
+        [net.id]: newResult
+      };
+      setPingResults(prev => ({ ...prev, [net.id]: newResult }));
+
+      pingLoadingRef.current[net.id] = false;
+      setPingLoading(prev => ({ ...prev, [net.id]: false }));
+    }
+  }, []);
+
+  // Executa o ping automaticamente apenas 1 vez a cada 1 hora para cada rede com IP cadastrado,
+  // em pequenos lotes para não gerar picos na rede ou nos roteadores.
+  useEffect(() => {
+    if (networks.length === 0) return;
+    let cancelled = false;
+
+    const runScheduledPings = async () => {
+      const now = Date.now();
+      const dueNetworks = networks.filter(net => {
+        const cleanIp = net.ip?.trim();
+        if (!cleanIp) return false;
+        const cached = pingResultsRef.current[net.id];
+        if (!cached || cached.ip !== cleanIp) return true;
+        return now - cached.timestamp >= ONE_HOUR_MS;
+      });
+
+      if (dueNetworks.length === 0) return;
+
+      const batchSize = 4;
+      for (let i = 0; i < dueNetworks.length; i += batchSize) {
+        if (cancelled) break;
+        const batch = dueNetworks.slice(i, i + batchSize);
+        await Promise.all(batch.map(net => executePing(net)));
+      }
+    };
+
+    runScheduledPings();
+
+    // Verifica a cada 1 minuto se alguma rede completou 1 hora desde o último ping
+    const intervalId = window.setInterval(runScheduledPings, 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [networks, executePing]);
 
   // Form Fields
   const [local, setLocal] = useState('');
@@ -305,15 +434,101 @@ export const Wifi: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                networks.map((net) => (
+                networks.map((net) => {
+                  const pingInfo = pingResults[net.id];
+                  const isPinging = Boolean(pingLoading[net.id]);
+                  const hasValidPing = pingInfo && pingInfo.ip === net.ip?.trim();
+                  const pingStatus = hasValidPing ? pingInfo.status : null;
+                  const lastPingTimeStr = hasValidPing
+                    ? new Date(pingInfo.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                    : null;
+
+                  const cleanIp = net.ip?.trim() || '';
+                  const routerUrl = cleanIp
+                    ? /^https?:\/\//i.test(cleanIp)
+                      ? cleanIp
+                      : `http://${cleanIp}`
+                    : '';
+
+                  return (
                   <tr key={net.id} className="hover:bg-slate-50/50 transition-colors">
-                    {/* Local / Rede */}
+                    {/* Local / Rede com botões PING e Acesso ao lado */}
                     <td className="py-4 px-6">
-                      <p className="font-bold text-slate-900">{net.local}</p>
-                      <p className="text-[10px] text-slate-500 font-semibold mt-0.5 flex items-center gap-1">
-                        <WifiIcon size={10} className="text-slate-400" />
-                        SSID: {net.nome_rede}
-                      </p>
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {cleanIp ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => executePing(net)}
+                                disabled={isPinging}
+                                title={
+                                  isPinging
+                                    ? `Executando ping para ${cleanIp}...`
+                                    : pingStatus === 'online'
+                                      ? `PING OK (${cleanIp}${pingInfo?.latency ? ` • ${pingInfo.latency}` : ''}) — Verificado às ${lastPingTimeStr}. Clique para testar agora.`
+                                      : pingStatus === 'offline'
+                                        ? `Sem resposta de ${cleanIp} — Verificado às ${lastPingTimeStr}. Clique para testar agora.`
+                                        : `Clique para testar conexão (PING) com ${cleanIp}`
+                                }
+                                className={`
+                                  inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider border transition-all cursor-pointer shrink-0
+                                  ${isPinging
+                                    ? 'bg-slate-100 text-slate-600 border-slate-300 cursor-wait'
+                                    : pingStatus === 'online'
+                                      ? 'bg-emerald-500 text-white border-emerald-600 shadow-xs shadow-emerald-500/25 hover:bg-emerald-600 active:scale-95'
+                                      : pingStatus === 'offline'
+                                        ? 'bg-rose-500 text-white border-rose-600 shadow-xs shadow-rose-500/25 hover:bg-rose-600 active:scale-95'
+                                        : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 active:scale-95'}
+                                `}
+                              >
+                                {isPinging ? (
+                                  <Loader2 size={10} className="animate-spin shrink-0" />
+                                ) : (
+                                  <Activity size={10} className="shrink-0" />
+                                )}
+                                <span>PING</span>
+                              </button>
+
+                              <a
+                                href={routerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={`Abrir painel do roteador (${cleanIp}) em nova aba`}
+                                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wider border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-2xs active:scale-95 shrink-0"
+                              >
+                                <ExternalLink size={9} className="shrink-0" />
+                                <span>Acesso</span>
+                              </a>
+                            </>
+                          ) : (
+                            <>
+                              <span
+                                title="Nenhum endereço IP cadastrado para esta rede"
+                                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wider border bg-slate-50 text-slate-300 border-slate-200/70 select-none shrink-0 cursor-not-allowed"
+                              >
+                                <Activity size={10} className="shrink-0" />
+                                <span>PING</span>
+                              </span>
+                              <span
+                                title="Nenhum endereço IP cadastrado para acesso remoto"
+                                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wider border bg-slate-50 text-slate-300 border-slate-200/70 select-none shrink-0 cursor-not-allowed"
+                              >
+                                <ExternalLink size={9} className="shrink-0" />
+                                <span>Acesso</span>
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900">{net.local}</p>
+                          <p className="text-[10px] text-slate-500 font-semibold mt-0.5 flex items-center gap-1">
+                            <WifiIcon size={10} className="text-slate-400 shrink-0" />
+                            <span className="truncate">SSID: {net.nome_rede}</span>
+                          </p>
+                        </div>
+                      </div>
                     </td>
 
                     {/* Dispositivo / IP */}
@@ -438,7 +653,8 @@ export const Wifi: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
